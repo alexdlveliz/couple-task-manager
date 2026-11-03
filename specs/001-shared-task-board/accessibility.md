@@ -1,0 +1,11 @@
+# Accessibility and Spanish review
+
+The board, sign-in, form, deadline, offline, synchronization and storage messages were reviewed against `contracts/ui.md`. The interface uses Spanish labels and messages, semantic headings, native controls, textual statuses and a native modal dialog. The form exposes required and invalid fields and associates inline errors with the affected inputs. Save and sync failures have visible text; successful save feedback is separate from refresh status. Automatic polls do not announce a repeated success message.
+
+Chromium browser checks passed for keyboard opening, initial focus, validation focus, Escape and focus return, a 320 CSS-pixel viewport, and the primary flow at 200% zoom. The same checks passed in the Firefox, WebKit and mobile-profile browser run. A later Chromium/Firefox run also passed keyboard navigation between the date and time inputs and saving a past deadline. An interactive Chromium review entered a date and time by keypress, used native select type-ahead for the assignee, saved, and observed focus return; this is not a screen-reader review. Buttons and form controls have a minimum height of 44 CSS pixels; their actual physical-device behavior still needs review. CSS uses a 16px base and visible focus outlines.
+
+Computed contrast for principal color pairs: body text on page background 11.25:1, button text on primary button 9.09:1, secondary task text on white 6.46:1, and sync text on the page background 6.63:1. These are color-pair calculations, not a complete visual or assistive-technology audit.
+
+Pending acceptance: manual screen-reader review of names, error associations, live regions and state announcements; independent keyboard/date-entry review by both partners; real Android Chrome and iPhone Safari/Home Screen checks when available. These checks have not been claimed as passed. Required/invalid accessibility attributes were included in the latest full browser build; assistive-technology announcements still require a manual screen-reader review.
+
+The available computer-use interface did not expose a native application or browser surface for a VoiceOver session, so screen-reader operation and physical-device behavior could not be verified in this environment.

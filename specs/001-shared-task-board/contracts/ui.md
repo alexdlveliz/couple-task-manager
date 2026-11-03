@@ -22,7 +22,7 @@ Forms require labeled “Título” and “Responsable”; editing also has “E
 | Save confirmed | “Cambios guardados.” | Immediate full refresh; sync failure remains independently visible |
 | Save rejected/uncertain | “No se pudo confirmar el guardado. Actualiza el tablero antes de intentarlo de nuevo.” | Retain draft; refresh to reconcile; do not automatically retry POST |
 | Storage unavailable | “No se pudieron guardar los datos en este dispositivo. La consulta sin conexión puede no estar disponible.” | Online board still works; do not claim persistence |
-| Cache cleanup failed | “No se pudieron borrar los datos locales. No se mostrará la copia guardada.” | Hide private state and block restore until cleanup succeeds |
+| Cache cleanup failed | “No se pudieron borrar los datos locales. No se mostrará la copia guardada.” | Hide private state and block restore until cleanup succeeds when a pending-cleanup marker can be persisted; see data-model.md for the accepted all-storage-failed limitation |
 | No offline snapshot | “No hay tareas guardadas en este dispositivo. Conéctate para cargar el tablero.” | Never show another account's snapshot |
 | Shell never installed | Browser-native offline screen may appear | First-ever disconnected navigation cannot execute an uncached app |
 | Session rejected | “Tu sesión ya no es válida. Inicia sesión de nuevo.” | Clear private state/cache; stop refreshes |

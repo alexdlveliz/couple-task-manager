@@ -1,10 +1,10 @@
 # Quickstart and Acceptance Validation
 
-This is a Phase 1 run guide for the future implementation. This repository currently contains design artifacts; the package scripts, configurations, migrations, seed helper and tests described here must be supplied during implementation. These commands are the intended interface, not a claim that application commands run today.
+This run guide describes local demo setup and the acceptance scenarios. See validation.md for actual test results and remaining checks.
 
 ## Prerequisites and configuration
 
-Use Node.js 22.12+ and pnpm, Java supported by the installed Firebase Emulator release, Firebase CLI via a pinned `firebase-tools` development dependency, Wrangler, and Playwright browser dependencies. Keep exact dependency versions in the future lockfile. Use the same local demo project ID everywhere: `demo-shared-task-board`. No production credentials or deployment are needed for local acceptance.
+Use Node.js 22.12+ and pnpm, OpenSSL on PATH for ephemeral test certificates, Java supported by the installed Firebase Emulator release, Firebase CLI via a pinned `firebase-tools` development dependency, Wrangler, and Playwright browser dependencies. Keep exact dependency versions in the future lockfile. Use the same local demo project ID everywhere: `demo-shared-task-board`. No production credentials or deployment are needed for local acceptance.
 
 Implementation must provide `firebase.json` with Auth on `127.0.0.1:9099` and Emulator UI on port 4000; `wrangler.jsonc` with `DB` binding, local database name `shared-task-board`, migrations directory `migrations`, assets directory `dist`, API-first routing, and separate local/production auth configuration. Vite dev runs port 5173 and proxies `/api` to Wrangler on 8787. Production acceptance runs the built shell served by Wrangler on 8787 so the service worker is tested.
 
@@ -19,7 +19,7 @@ Implementation must provide `firebase.json` with Auth on `127.0.0.1:9099` and Em
 | `FIREBASE_AUTH_EMULATOR_HOST` | `127.0.0.1:9099`, local tools only |
 | `DB` | D1 binding; no remote bindings in automated tests |
 
-Connect Firebase browser auth explicitly to `http://127.0.0.1:9099` before sign-in. Keep local `.env.local` and `.dev.vars` ignored by git. Production Worker must fail startup/config validation if emulator mode/host is set; production client build must not connect to the emulator. [Official emulator setup](https://firebase.google.com/docs/emulator-suite/connect_auth).
+Connect Firebase browser auth explicitly to `http://127.0.0.1:9099` before sign-in. Keep local `.env.local` and `.dev.vars` ignored by git. The production Worker entry point rejects emulator mode or an emulator host. The distinct local Worker entry point is for demo development only and must never be deployed. Production client builds must not connect to the emulator. [Official emulator setup](https://firebase.google.com/docs/emulator-suite/connect_auth).
 
 ## Intended development commands
 
@@ -27,6 +27,8 @@ From the repository root after implementation:
 
 ```bash
 pnpm install --frozen-lockfile
+cp .env.example .env.local
+cp .dev.vars.example .dev.vars.local
 pnpm exec playwright install
 pnpm exec firebase emulators:start --only auth --project demo-shared-task-board
 ```
@@ -34,7 +36,7 @@ pnpm exec firebase emulators:start --only auth --project demo-shared-task-board
 In another terminal, migrate local D1 and populate local fixtures:
 
 ```bash
-pnpm exec wrangler d1 migrations apply shared-task-board --local
+pnpm exec wrangler d1 migrations apply shared-task-board --local --env local
 pnpm run seed:local
 pnpm run dev
 ```
@@ -77,4 +79,4 @@ Integration uses Vitest 4.1+ and `@cloudflare/vitest-plugin` with `cloudflareTes
 | DST | America/New_York 2027-03-14 02:30 is rejected as nonexistent. 2027-11-07 01:30 resolves to earlier 2027-11-07T05:30:00Z, UTC−04:00, with explanatory text. Test zone change while editor open and unchanged-instant round trips. |
 | Spanish/mobile/accessibility (SC-005) | Run mobile and desktop browser projects, keyboard-only create/edit/deadline flows, 320px layout, 200% zoom, 44px targets. Review screen-reader names, focus and announcements manually; inspect all loading/auth/validation/offline/failure messages for Spanish. No task/status is communicated by color alone. |
 
-Production readiness additionally requires administrative creation of exactly two Firebase email/password accounts, UID seeding in D1, production token trust configuration, quota/CPU measurements, and a controlled signed-token smoke test. Do not deploy or create real accounts as part of this design phase. No notification permission, delivery or scheduling checks apply to this independently shippable feature.
+Production readiness additionally requires administrative creation of exactly two Firebase email/password accounts, UID seeding in D1, production token trust configuration, quota/CPU measurements, and a controlled signed-token smoke test. Do not deploy or create real accounts during local validation. No notification permission, delivery or scheduling checks apply to this independently shippable feature.

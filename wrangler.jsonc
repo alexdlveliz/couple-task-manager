@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "shared-task-board",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./dist", "not_found_handling": "single-page-application", "run_worker_first": ["/api", "/api/*"] },
+  "d1_databases": [{ "binding": "DB", "database_name": "shared-task-board", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }],
+  "vars": { "AUTH_MODE": "production", "FIREBASE_PROJECT_ID": "configure-production-project" },
+  "env": {
+    "local": {
+      "main": "src/worker/local.ts",
+      "d1_databases": [{ "binding": "DB", "database_name": "shared-task-board", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }],
+      "vars": { "AUTH_MODE": "emulator", "FIREBASE_PROJECT_ID": "demo-shared-task-board", "ENVIRONMENT": "local" }
+    }
+  }
+}

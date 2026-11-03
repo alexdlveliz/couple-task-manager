@@ -103,10 +103,10 @@
 
 **Purpose**: Validate complete feature and operating constraints without deploying or creating real accounts.
 
-- [ ] T041 [P] Audit Spanish/mobile/accessibility flows against contracts/ui.md and record evidence in specs/001-shared-task-board/accessibility.md; review sign-in/onboarding, validation, save/sync/offline/storage errors, keyboard focus/escape/return, screen-reader labels/states/live regions, contrast, 44px targets, 320px width and 200% zoom; fix owning UI files and rerun affected checks.
+- [x] T041 [P] Audit Spanish/mobile/accessibility flows against contracts/ui.md and record evidence in specs/001-shared-task-board/accessibility.md; review sign-in/onboarding, validation, save/sync/offline/storage errors, keyboard focus/escape/return, screen-reader labels/states/live regions, contrast, 44px targets, 320px width and 200% zoom; fix owning UI files and rerun affected checks.
 - [X] T042 [P] Add local capacity measurement helper in scripts/measure-capacity.ts and document observations in specs/001-shared-task-board/capacity.md; use 1,000 tasks/100 saves per day as planning envelope, measure D1 read/write metadata for unchanged/changed polls and index writes plus verifier/serialization CPU, compare against documented free-tier assumptions and distinguish local estimates from production measurements.
 - [X] T043 [P] Update README.md and specs/001-shared-task-board/quickstart.md to match implemented scripts, fixtures, ports, pinned dependencies, build/PWA serving, production provisioning/trust configuration, revision-preserving partner updates, privacy-safe logging, storage limitations and quota failure behavior; document controlled signed-token smoke-test procedure without deploying or creating production identities.
-- [ ] T044 Execute clean local quickstart and all typecheck/unit/integration/build/browser checks, reconcile FR-001–009 and SC-001–005 evidence in specs/001-shared-task-board/validation.md, repeat both partner timing checks and list remaining manual/production-only verification explicitly; accept feature only when applicable local criteria pass and remaining release checks are visible.
+- [x] T044 Execute clean local quickstart and all typecheck/unit/integration/build/browser checks, reconcile FR-001–009 and SC-001–005 evidence in specs/001-shared-task-board/validation.md, repeat both partner timing checks and list remaining manual/production-only verification explicitly; accept feature only when applicable local criteria pass and remaining release checks are visible.
 
 ## Dependencies & Execution Order
 

@@ -1,0 +1,414 @@
+openapi: 3.1.0
+info:
+  title: Shared Task Board API
+  version: 1.0.0
+  description: >-
+    Private two-partner board. All operations require a verified Firebase ID token
+    and an enabled server-controlled partner UID. Both partners have equal rights.
+    Every API response uses Cache-Control no-store. Error messages are Spanish.
+    Unknown /api routes return JSON 404; unsupported methods return JSON 405 with Allow.
+    No registration, partner management, deletion, offline writes, notifications or scheduling.
+servers:
+  - url: /api
+security:
+  - firebaseBearer: []
+paths:
+  /partners:
+    get:
+      operationId: listPartners
+      summary: List authorized assignees
+      description: Enabled partners in fixed slot order; two in normal operation.
+      responses:
+        '200':
+          description: Current assignable partners
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [partners]
+                properties:
+                  partners:
+                    type: array
+                    maxItems: 2
+                    items:
+                      $ref: '#/components/schemas/Partner'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+        default:
+          $ref: '#/components/responses/GenericError'
+  /tasks:
+    get:
+      operationId: getBoard
+      summary: Get the complete authoritative board
+      description: >-
+        Authenticate and authorize before evaluating If-None-Match. First check
+        singleton revision; if equal, avoid reading task rows. Otherwise read all
+        tasks and metadata in one consistent D1 read batch and return that revision.
+        Includes completed tasks, ordered by createdAt then id, with no pagination.
+        A snapshot's ETag is exactly quoted board-r followed by its decimal revision,
+        for example "board-r12". A mutation response cannot replace a complete snapshot.
+      parameters:
+        - name: If-None-Match
+          in: header
+          required: false
+          description: Exact ETag of the client's complete snapshot; other values treated as no match.
+          schema:
+            type: string
+          example: '"board-r12"'
+      responses:
+        '200':
+          description: Complete board snapshot
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+            ETag:
+              $ref: '#/components/headers/BoardETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardSnapshot'
+        '304':
+          description: Authorized snapshot unchanged; no response body.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+            ETag:
+              $ref: '#/components/headers/BoardETag'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+        default:
+          $ref: '#/components/responses/GenericError'
+    post:
+      operationId: createTask
+      summary: Create an assigned task in Por hacer
+      description: >-
+        Server generates ID and timestamps; status is always todo. Trim title.
+        Validate enabled assignee. Omitted deadline means null. Commit task and
+        one revision increment atomically. Do not automatically retry an uncertain POST.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTask'
+      responses:
+        '201':
+          $ref: '#/components/responses/Saved'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '415':
+          $ref: '#/components/responses/UnsupportedMedia'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+        default:
+          $ref: '#/components/responses/GenericError'
+  /tasks/{id}:
+    put:
+      operationId: replaceTask
+      summary: Replace all editable values of any task
+      description: >-
+        Any enabled partner may edit either partner's task. All status transitions
+        allowed, including reopening. Last D1 commit wins; no field merging or
+        optimistic version precondition. Preserve ID and createdAt; set updatedAt.
+        Return saved task and revision from the same transaction, after commit.
+        Not-found and other rejected operations never increment revision.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReplaceTask'
+      responses:
+        '200':
+          $ref: '#/components/responses/Saved'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '415':
+          $ref: '#/components/responses/UnsupportedMedia'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+        default:
+          $ref: '#/components/responses/GenericError'
+components:
+  securitySchemes:
+    firebaseBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: Firebase ID token
+      description: >-
+        Production verifies RS256 signature, trusted kid, exp, iat, auth_time,
+        exact project aud/issuer and nonempty sub. Server checks enabled UID each
+        request. Unsigned emulator tokens are accepted only in explicit local/test mode.
+  headers:
+    NoStore:
+      description: All API responses, including errors and conditional responses.
+      schema:
+        type: string
+        const: no-store
+    BoardETag:
+      description: Quoted board-r plus nonnegative decimal revision.
+      schema:
+        type: string
+        pattern: '^"board-r[0-9]+"$'
+      example: '"board-r12"'
+  schemas:
+    Revision:
+      type: integer
+      minimum: 0
+      maximum: 9007199254740991
+      description: Singleton monotonic task-commit revision; never inferred from timestamps.
+    Partner:
+      type: object
+      additionalProperties: false
+      required: [uid, displayName]
+      properties:
+        uid:
+          type: string
+          minLength: 1
+        displayName:
+          type: string
+          minLength: 1
+    Status:
+      type: string
+      enum: [todo, in_progress, blocked, completed]
+      description: Por hacer, En progreso, Bloqueada, Completada, respectively.
+    Title:
+      type: string
+      minLength: 1
+      pattern: '\S'
+      description: Server trims leading/trailing whitespace; rejects empty result.
+    Deadline:
+      type: [string, 'null']
+      format: date-time
+      pattern: 'Z$'
+      description: Nullable valid UTC RFC 3339 instant; past dates allowed. Server canonicalizes to Z.
+      example: '2026-11-02T15:00:00Z'
+    CreateTask:
+      type: object
+      additionalProperties: false
+      required: [title, assigneeUid]
+      properties:
+        title:
+          $ref: '#/components/schemas/Title'
+        assigneeUid:
+          type: string
+          minLength: 1
+          description: UID of one currently enabled partner.
+        deadline:
+          $ref: '#/components/schemas/Deadline'
+    ReplaceTask:
+      type: object
+      additionalProperties: false
+      required: [title, assigneeUid, status, deadline]
+      properties:
+        title:
+          $ref: '#/components/schemas/Title'
+        assigneeUid:
+          type: string
+          minLength: 1
+        status:
+          $ref: '#/components/schemas/Status'
+        deadline:
+          $ref: '#/components/schemas/Deadline'
+    Task:
+      type: object
+      additionalProperties: false
+      required: [id, title, assigneeUid, status, deadline, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          $ref: '#/components/schemas/Title'
+        assigneeUid:
+          type: string
+          minLength: 1
+        status:
+          $ref: '#/components/schemas/Status'
+        deadline:
+          $ref: '#/components/schemas/Deadline'
+        createdAt:
+          type: string
+          format: date-time
+          pattern: 'Z$'
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: 'Z$'
+    BoardSnapshot:
+      type: object
+      additionalProperties: false
+      required: [tasks, revision]
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        revision:
+          $ref: '#/components/schemas/Revision'
+    SaveResult:
+      type: object
+      additionalProperties: false
+      required: [task, revision]
+      properties:
+        task:
+          $ref: '#/components/schemas/Task'
+        revision:
+          $ref: '#/components/schemas/Revision'
+    Error:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum: [AUTH_REQUIRED, INVALID_TOKEN, PARTNER_FORBIDDEN, INVALID_JSON, VALIDATION_ERROR, TASK_NOT_FOUND, ROUTE_NOT_FOUND, METHOD_NOT_ALLOWED, UNSUPPORTED_MEDIA_TYPE, SERVICE_UNAVAILABLE, INTERNAL_ERROR]
+            message:
+              type: string
+              description: Safe Spanish message, never raw exception, token or task content.
+            fields:
+              type: object
+              additionalProperties:
+                type: string
+              description: Optional field names mapped to Spanish validation explanations.
+  responses:
+    Saved:
+      description: Committed task and revision; client must immediately refresh complete board.
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/NoStore'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SaveResult'
+    InvalidRequest:
+      description: INVALID_JSON or VALIDATION_ERROR; rejected with no mutation.
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/NoStore'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: VALIDATION_ERROR
+              message: Revisa los datos de la tarea.
+              fields:
+                title: Escribe un título.
+    Unauthenticated:
+      description: AUTH_REQUIRED or INVALID_TOKEN; clear private client state on definitive rejection.
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/NoStore'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: INVALID_TOKEN
+              message: Tu sesión ya no es válida. Inicia sesión de nuevo.
+    Forbidden:
+      description: PARTNER_FORBIDDEN; valid identity absent from enabled partner records.
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/NoStore'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: PARTNER_FORBIDDEN
+              message: Esta cuenta no tiene acceso al tablero.
+    NotFound:
+      description: TASK_NOT_FOUND; authenticated task ID does not exist.
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/NoStore'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: TASK_NOT_FOUND
+              message: No se encontró la tarea.
+    UnsupportedMedia:
+      description: UNSUPPORTED_MEDIA_TYPE; writes require application/json.
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/NoStore'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: UNSUPPORTED_MEDIA_TYPE
+              message: Envía los datos en formato JSON.
+    Unavailable:
+      description: SERVICE_UNAVAILABLE; D1, trusted-key retrieval or service quota failure. Preserve stale view.
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/NoStore'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: SERVICE_UNAVAILABLE
+              message: El servicio no está disponible. Inténtalo de nuevo.
+    GenericError:
+      description: >-
+        JSON error for Worker-handled failures, including ROUTE_NOT_FOUND (404),
+        METHOD_NOT_ALLOWED (405, with Allow header), and INTERNAL_ERROR (500).
+        Platform failures outside Worker execution may be non-JSON; clients show
+        the Spanish synchronization error and never interpret HTML as task data.
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/NoStore'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: INTERNAL_ERROR
+              message: No se pudo completar la operación. Inténtalo de nuevo.

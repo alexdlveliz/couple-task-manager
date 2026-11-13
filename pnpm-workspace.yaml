@@ -1,5 +1,6 @@
+verifyDepsBeforeRun: false
 allowBuilds:
-  '@firebase/util': true
+  "@firebase/util": true
   esbuild: true
   protobufjs: true
   workerd: true

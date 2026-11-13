@@ -65,7 +65,7 @@ A maintainer can review the initial cleanup and follow documentation explaining 
 ### Functional Requirements
 
 - **FR-001**: The project MUST use ESLint for coding conventions and Prettier for formatting, with one shared, version-controlled policy for each responsibility.
-- **FR-002**: Coverage MUST include maintained application code, tests, development scripts, configuration, and documentation wherever supported; documentation MUST identify supported file categories and exclusions.
+- **FR-002**: Coverage MUST include supported maintained application code, tests, development scripts and configuration, subject to the documented exclusions; documentation MUST identify supported file categories and exclusions. All Markdown files and the `specs/`, `.specify/` and `.agents/` directories are excluded from formatting; `.agents/` is also excluded from linting.
 - **FR-003**: Strict checks MUST detect unused code, violations of applicable framework correctness rules, explicit unrestricted typing, and unsafe operations on untyped values. Existing strict type checking MUST remain enabled and be included in the quality check workflow.
 - **FR-004**: Contributors MUST have a documented check-only Make entry point that runs lint, formatting verification, and type checking across the project without changing files.
 - **FR-005**: Contributors MUST have a documented Make correction entry point that runs automatic lint fixes and formatting across the project and checks for remaining violations, including typing errors.
@@ -89,6 +89,6 @@ A maintainer can review the initial cleanup and follow documentation explaining 
 
 - Proposed entry points are `make lint` for check-only lint, formatting verification, and typing checks, and `make format` for automatic corrections followed by verification. These names are assumptions for review.
 - Strictness means a documented recommended strict policy including type-aware safety checks, with narrowly justified exceptions; choosing individual rules and formatting options belongs to planning.
-- Formatting covers all supported maintained text formats, including documentation. Linting and typing apply only where supported and appropriate.
+- Formatting covers supported maintained text formats except all Markdown files and the contents of `specs/`, `.specify/` and `.agents/`, which the user excluded. Linting and typing apply only where supported and appropriate; linting also excludes `.agents/`.
 - This feature includes the initial repository cleanup. New CI enforcement, commit hooks, editor integrations, and unrelated refactors are outside scope.
 - The existing supported runtime and package manager remain prerequisites. These local maintenance tools add no production services, paid dependencies, or changes to free-tier operation.

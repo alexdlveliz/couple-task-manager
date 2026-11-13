@@ -1,5 +1,7 @@
 # MVP Validation: Consistent Code Quality
 
+**Current scope update:** The user excluded all Markdown files and all content under `specs/`, `.specify/` and `.agents/` from formatting; `.agents/` is also excluded from linting. The MVP fixture results and formatting coverage statements below describe the earlier policy, not current coverage.
+
 Date: 2026-11-13. Scope: T001–T009 only, on `feature/linter-and-formatter`.
 
 ## Commands and results
@@ -67,7 +69,7 @@ The diagnostic inventory found 62 linted files, 187 errors and 0 warnings. Prett
 - A fresh independent review found credential ignore syntax and descendant cleanup issues; both were reproduced with failing tests and fixed. No deferred review findings remain.
 - pnpm install preflights are disabled explicitly; dependency installation is a separate prerequisite. This changes implicit installation behavior for other package commands as documented in research.md, without changing existing Make dispatch or application behavior.
 - No extension configuration exists, so no before/after hooks are registered. Checklist markers and AGENTS.md are unchanged. No application code, runtime requirement, schema or API changed.
-- Changes are uncommitted and await user diff review. No push or PR was performed.
+- At the MVP checkpoint, changes awaited user diff review; no push or PR had been performed.
 
 ## User Story 2 validation — 2026-11-13
 
@@ -82,4 +84,29 @@ Real-tool validation ran `python3 /private/tmp/verify-us2.py` in a disposable fi
 - Missing pnpm: exit 2 from Make, with actionable spawn errors for all five stages. Formatter-only package script: exit 0 despite an unresolved lint violation and no quality runner stages.
 - Protected fixture SHA-256 values matched before and after: `AGENTS.md` `b18cc7ab7cbebcc4a38c26504490bb2e68cff9dd8a8bdb8751133807848b3046`; `.env.secret.ts` `621409fb5f3f54b1b0ceeef082dd2be410766bee3fb5819dca7deb7d5b398097`; `dist/generated.ts` `817cfc0885cbc7e6f1ac323111d26e4515f457110a3fc897b272b25a67043a0d`; `demo.secret.json` `adc6108125c1695bcc60737d467fdb09cc68b8f11e008ee56803a6162d0b7240`.
 
-T010–T013 are complete. The repository-wide correction and lint cleanup remain US3; `make format` was not run against the working checkout. Changes await review before committing.
+At the US2 checkpoint, T010–T013 were complete and repository-wide correction and lint cleanup remained for US3; `make format` had not yet been run against the working checkout.
+
+## Phase 6 audit — current user-selected scope
+
+The user confirmed that Markdown and documentation are excluded from formatting. The committed `.prettierignore` excludes all `*.md` files and all content under `specs/`, `.specify/` and `.agents/`; ESLint also excludes `.agents/`. Earlier MVP evidence on Markdown and documentation formatting remains historical. README, specification, plan and quickstart have been updated to describe the selected scope.
+
+| Requirement | Audit result and evidence |
+| --- | --- |
+| FR-001 | PASS: ESLint and Prettier have separate version-controlled policies. |
+| FR-002 | PASS under revised user-selected scope: code, tests, scripts and supported configuration are covered; Markdown and the specified directories are excluded and documented. `prettier --file-info` confirmed README, a specification YAML file, `.specify` JSON and an `.agents` file are ignored, while `src/client/App.tsx` is included. |
+| FR-003 | PASS: strict typed linting, React Hooks correctness, zero warnings and existing strict compiler checks remain enabled. Earlier isolated fixtures demonstrated unused bindings, explicit `any`, unsafe member access, Hooks violations and TS2322. |
+| FR-004–FR-006 | PASS: Make and package entry points run the required stages; controlled child tests cover ordering, aggregation, missing tools and interruption. `make lint` passed on the committed US3 baseline and again after the documentation update. |
+| FR-007 | PASS: the configuration conflict helper found no conflicts; two consecutive `make format` runs returned 0 without changing tracked or eligible untracked file contents at the US3 checkpoint. |
+| FR-008 | PASS within the revised scope: quality checks pass; the independent review found no actionable behavior regressions; the local `make test` workflow passed typecheck, unit and integration tests, build and the browser suite. |
+| FR-009 | PASS for the audited paths: explicit ignore patterns protect generated output, local state and secrets; narrow exceptions include their rationale. A committed changed-path audit found no `.agents/`, `AGENTS.md`, environment files, dependencies, generated output or local service artifacts. This is a path audit, not a secret-content scan. |
+| FR-010 | PASS: the README and quickstart describe installation, check and correction commands, current exclusions, supported formats and narrow exceptions. Existing Make targets remain in place. |
+
+| Success criterion | Audit result |
+| --- | --- |
+| SC-001 | PASS for the revised supported scope: `make lint` passed and a before/after content-hash check confirmed it is read-only. |
+| SC-002 | PASS for the revised supported scope: isolated fixtures detected lint, unsafe TypeScript, framework, in-scope configuration-format and compiler violations. Earlier Markdown-drift detection is not a current requirement. |
+| SC-003 | PASS: real isolated lint and formatting corrections succeeded, and the second run preserved the corrected file hash. |
+| SC-004 | PASS: controlled failures and missing-command fixtures returned nonzero without skipping subsequent stages. |
+| SC-005 | PASS: 131 unit tests and 17 integration tests passed, the build passed, and the full local `make test` retry reported all checks passed, including the Playwright browser suite. |
+
+The reviewed MVP, US2 and US3 changes are committed separately as `6b296a3`, `2933314` and `0e55f44`. The user approved the final documentation and audit edits and requested completion of T021. These reviewed edits are committed separately. No branch push or pull request was performed.

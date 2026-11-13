@@ -36,6 +36,8 @@ The setup script reports its logical feature selector as BRANCH=005-code-quality
 
 ## MVP execution inventory (2026-11-13)
 
+**Current scope update:** The user subsequently excluded all Markdown files and all content under `specs/`, `.specify/` and `.agents/` from formatting; `.agents/` is also excluded from linting. Earlier inventory and fixture-coverage statements in this section are historical and do not describe the current ignore policy.
+
 - Clean starting checkout: `feature/linter-and-formatter`, commit `cfb3882`. Work remains on this requested feature branch; no additional worktree or commits are created. The existing linked base-feature worktree is unrelated and excluded.
 - Inventory: 143 maintained tracked files, no eligible untracked files initially. Supported categories include 49 `.ts`, five `.tsx`, five `.mjs`, JSON/JSONC, YAML, Markdown, CSS, HTML and SVG; `.webmanifest` is formatted with the JSON parser. Maintained `.agents/skills` and `.specify` templates/configuration remain covered.
 - SQL, Makefiles, shell scripts, environment examples, Git ignore files, package-manager lockfiles and binary icons have no lint/format promise. No additional format plugins are introduced.

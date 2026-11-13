@@ -26,7 +26,7 @@ Add ESLint flat configuration, strict type-aware TypeScript checks, React correc
 
 **Constraints**: No services or secrets needed for quality checks; zero warnings accepted; no blanket strict-rule suppression; no modification of AGENTS.md without explicit authorization.
 
-**Scale/Scope**: Maintained source, tests, scripts, configuration, documentation, and supported text assets throughout the repository.
+**Scale/Scope**: Maintained source, tests, scripts, configuration and supported text assets, subject to the documented exclusions for Markdown, `specs/`, `.specify/` and `.agents/`.
 
 ## Constitution Check
 
@@ -64,10 +64,10 @@ src/                       # baseline lint and format adoption
 tests/                     # adoption plus meaningful command checks
 scripts/                   # JavaScript/TypeScript adoption
 *.config.ts                # tooling configuration adoption
-specs/                     # supported documentation formatting
+specs/                     # feature documentation, excluded from formatting
 ```
 
-**Structure Decision**: Extend the existing single package. No new application subsystem. Inventory tracked and eligible untracked maintained files, including dot-directories, before defining ignore patterns. Do not exclude all hidden directories or all specs.
+**Structure Decision**: Extend the existing single package. No new application subsystem. The user subsequently excluded Markdown and all files under `specs/`, `.specify/` and `.agents/` from formatting; `.agents/` is also excluded from linting. Other eligible files remain covered.
 
 ## Design Decisions
 
@@ -75,7 +75,7 @@ specs/                     # supported documentation formatting
 - Scope browser globals to client files and Node globals to maintenance/config files. Use appropriate Worker globals without enabling unrestricted browser or Node globals everywhere. Apply React Hooks recommended correctness rules to React code.
 - Use ESLint recommended checks for maintained .js/.mjs/.cjs files; do not claim type-aware checking for JavaScript or enable checkJs across the repository as part of this feature.
 - Place eslint-config-prettier last; run Prettier independently rather than as an ESLint rule. Use two spaces, semicolons, double quotes, trailing commas, LF and 80-column print width. Preserve Markdown prose wrapping to minimize editorial churn.
-- Prettier covers supported TS/JS, JSON/JSONC, YAML, Markdown, CSS and HTML. SQL, Makefiles, shell scripts, lockfiles and binary assets have no promised formatting or lint coverage; document this limit. Do not add unrelated format plugins.
+- Prettier covers supported TS/JS, JSON/JSONC, YAML, CSS and HTML outside excluded directories. All Markdown files and the contents of `specs/`, `.specify/` and `.agents/` are excluded. SQL, Makefiles, shell scripts, lockfiles and binary assets have no promised formatting or lint coverage; document this limit. Do not add unrelated format plugins.
 - Exclude dependencies, build output, coverage, reports, caches, local emulator/Worker state, environment secrets and generated files explicitly. Exclude pnpm-lock.yaml from formatting because the package manager owns it. Exclude AGENTS.md from rewriting because repository instructions require explicit permission; document this policy exception.
 - Add package scripts lint, lint:fix, format:check, format and quality; names and behavior are specified in the command contract. Keep existing Make entry points unchanged.
 - Implement a small process runner using inherited output and argument arrays. Run each requested stage even after a prior lint failure, aggregate failure, and label stages. Corrections must still format when lint fixes leave unresolved errors, then run all read-only checks. No network, service setup, ENV selection, or deployment behavior.

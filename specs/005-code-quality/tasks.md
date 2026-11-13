@@ -8,6 +8,8 @@
 
 **Format**: `- [ ] Tnnn [P?] [USn?] Description with path`. [P] denotes independent file work once stated prerequisites are complete.
 
+**Scope update**: The user subsequently excluded all Markdown files and all content under `specs/`, `.specify/` and `.agents/` from formatting, and excluded `.agents/` from linting. Earlier completed task descriptions record the original scope and validation; see the current specification and validation notes.
+
 ## Phase 1: Setup
 
 - [x] T001 Verify `feature/linter-and-formatter`, inspect callers and existing workflow tests, and inventory maintained tracked/untracked files and exclusions; record coverage and compatibility findings in specs/005-code-quality/research.md before changing functions.
@@ -64,8 +66,8 @@
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T020 Audit FR-001–FR-010 and SC-001–SC-005 against implementation and evidence in specs/005-code-quality/validation.md; verify no secrets/local artifacts entered diffs, AGENTS.md is unchanged, no global rule weakening occurred and existing Make contracts remain intact.
-- [ ] T021 Present focused tooling, mechanical formatting, manual correction, tests and documentation diffs for user review; record review/validation status in specs/005-code-quality/validation.md and make incremental Conventional Commits only after the relevant diff is reviewed. Do not push or create a PR without the separately required user confirmation.
+- [x] T020 Audit FR-001–FR-010 and SC-001–SC-005 against implementation and evidence in specs/005-code-quality/validation.md; verify no secrets/local artifacts entered diffs, AGENTS.md is unchanged, no global rule weakening occurred and existing Make contracts remain intact.
+- [x] T021 Present focused tooling, mechanical formatting, manual correction, tests and documentation diffs for user review; record review/validation status in specs/005-code-quality/validation.md and make incremental Conventional Commits only after the relevant diff is reviewed. Do not push or create a PR without the separately required user confirmation.
 
 ## Dependencies & Execution Order
 

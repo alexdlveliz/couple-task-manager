@@ -17,13 +17,13 @@ The following baseline scenarios require the repository-wide cleanup in US3. Use
 1. Run `make lint`. Expect labeled lint, formatting and compiler checks, zero warnings and exit status zero.
 2. Compare maintained file contents before and after checking; expect no changes.
 3. Run `make format`, review the diff, then run it again. Expect the second invocation to produce no changes and succeed.
-4. Confirm documented coverage includes src, tests, scripts, root configuration, Markdown and eligible dot-directories; confirm excluded artifacts and secrets are untouched. See [commands](contracts/commands.md).
+4. Confirm documented coverage includes supported src, tests, scripts and root configuration. Confirm Markdown files, `specs/`, `.specify/`, `.agents/`, excluded artifacts and secrets are untouched by formatting; `.agents/` is also excluded from linting. See [commands](contracts/commands.md).
 
 ## Negative scenarios
 
 Use an isolated disposable copy or fixture; never change production configuration or seed production data.
 
-- Introduce unused code in a script, explicit any and unsafe operations in TypeScript, a Hooks violation in a component, formatting drift in documentation/configuration, and a compiler-only type error. Test each separately and expect a nonzero result with the relevant diagnostic.
+- Introduce unused code in a script, explicit any and unsafe operations in TypeScript, a Hooks violation in a component, formatting drift in an in-scope configuration file, and a compiler-only type error. Test each separately and expect a nonzero result with the relevant diagnostic.
 - Introduce multiple categories together. Expect all verification stages to run and overall failure even if the last stage passes.
 - Introduce fixable whitespace plus a manual lint issue. Run `make format`; expect formatting to apply, verification to run and final failure for unresolved issues.
 - Simulate missing executables or invalid configuration with controlled command-runner fixtures; expect labeled failures and no false success.

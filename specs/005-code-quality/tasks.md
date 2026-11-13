@@ -40,10 +40,10 @@
 
 **Independent test**: An isolated fixable fixture is corrected and a second run is unchanged; a manual violation still causes failure while formatting and all verification stages execute.
 
-- [ ] T010 [US2] Add failing behavioral checks in tests/unit/make-format.test.ts for fix/format/check ordering, formatting after unresolved lint findings, final failure preservation, second-run idempotence, exclusions and interruption cleanup per specs/005-code-quality/contracts/commands.md.
-- [ ] T011 [US2] Extend scripts/quality.mjs with correction mode that attempts lint:fix and format despite ordinary stage failures, then all check stages, preserves any failed stage and stops on interruption; satisfy T010 while retaining US1 behavior.
-- [ ] T012 [US2] Add lint:fix and format package scripts to package.json and a phony format target in Makefile invoking correction mode; keep package format limited to Prettier as defined in contracts/commands.md.
-- [ ] T013 [US2] Run isolated mixed fixable/manual-finding, repeat-run, missing-prerequisite and protected-file scenarios from quickstart.md and record actual statuses and before/after hashes in specs/005-code-quality/validation.md.
+- [x] T010 [US2] Add failing behavioral checks in tests/unit/make-format.test.ts for fix/format/check ordering, formatting after unresolved lint findings, final failure preservation, second-run idempotence, exclusions and interruption cleanup per specs/005-code-quality/contracts/commands.md.
+- [x] T011 [US2] Extend scripts/quality.mjs with correction mode that attempts lint:fix and format despite ordinary stage failures, then all check stages, preserves any failed stage and stops on interruption; satisfy T010 while retaining US1 behavior.
+- [x] T012 [US2] Add lint:fix and format package scripts to package.json and a phony format target in Makefile invoking correction mode; keep package format limited to Prettier as defined in contracts/commands.md.
+- [x] T013 [US2] Run isolated mixed fixable/manual-finding, repeat-run, missing-prerequisite and protected-file scenarios from quickstart.md and record actual statuses and before/after hashes in specs/005-code-quality/validation.md.
 
 **Checkpoint**: Both workflows work independently of local application services; full baseline adoption follows.
 

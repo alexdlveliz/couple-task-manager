@@ -4,15 +4,15 @@
 
 The check-only MVP (T001–T009) provides `make lint` and `pnpm run quality`, plus individual `pnpm run lint`, `pnpm run format:check` and `pnpm run typecheck` commands. All three stages run with labeled diagnostics and aggregate failure status, without rewriting maintained files or starting services. pnpm dependency-install preflights are disabled; install dependencies explicitly first.
 
-Existing repository lint and formatting findings are expected until US3 cleanup. A nonzero check result at this checkpoint does not imply a runner failure. Automatic correction (`make format`, `lint:fix` and `format`) remains deferred to US2. Results are recorded in [validation.md](validation.md).
+Existing repository lint and formatting findings are expected until US3 cleanup. A nonzero check result at this checkpoint does not imply a runner failure. `make format` attempts `lint:fix` and `format` before running all three checks. The individual `pnpm run format` command runs Prettier only. Results are recorded in [validation.md](validation.md).
 
 ## Prerequisites
 
 Use the supported Node runtime and pnpm 12.16.1 from README.md, plus Make. Run `pnpm install --frozen-lockfile` from the repository root after the new lockfile is available. Quality checks need no local services or credentials.
 
-## Full adoption validation (US2/US3)
+## Full adoption validation (US3)
 
-The following baseline and correction scenarios describe later delivery; correction commands are not part of the MVP.
+The following baseline scenarios require the repository-wide cleanup in US3. Use disposable fixtures to validate correction before then; running `make format` on this checkout rewrites all in-scope files.
 
 1. Run `make lint`. Expect labeled lint, formatting and compiler checks, zero warnings and exit status zero.
 2. Compare maintained file contents before and after checking; expect no changes.

@@ -9,6 +9,8 @@
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix --max-warnings 0",
+    "format": "prettier --write .",
     "format:check": "prettier --check .",
     "quality": "node scripts/quality.mjs",
     "typecheck": "tsc --noEmit",

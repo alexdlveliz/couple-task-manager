@@ -61,10 +61,25 @@ The diagnostic inventory found 62 linted files, 187 errors and 0 warnings. Prett
 
 ## Scope, review and completion
 
-- T001–T009 completed; T010 onward remain unchecked. Correction scripts and `make format` are not implemented.
+- At the MVP checkpoint, T001–T009 were complete and correction scripts were not yet implemented; see the US2 update below.
 - Supported lint categories: maintained JS/MJS/CJS with recommended JavaScript checks; TS/TSX/MTS/CTS, including declarations, with strict typed checks. JavaScript is not type-checked. Client Hooks and environment globals are scoped.
 - Supported formatting categories: maintained JS/TS, JSON/JSONC, YAML, Markdown, CSS, HTML, SVG and webmanifest via a JSON override, including eligible maintained dot-directories. Unsupported formats and exclusions are recorded in research.md.
 - A fresh independent review found credential ignore syntax and descendant cleanup issues; both were reproduced with failing tests and fixed. No deferred review findings remain.
 - pnpm install preflights are disabled explicitly; dependency installation is a separate prerequisite. This changes implicit installation behavior for other package commands as documented in research.md, without changing existing Make dispatch or application behavior.
 - No extension configuration exists, so no before/after hooks are registered. Checklist markers and AGENTS.md are unchanged. No application code, runtime requirement, schema or API changed.
 - Changes are uncommitted and await user diff review. No push or PR was performed.
+
+## User Story 2 validation — 2026-11-13
+
+`make format` now invokes `lint:fix`, `format`, `lint`, `format:check`, and `typecheck` in that order; any failed stage preserves a nonzero result. `pnpm run format` invokes only Prettier.
+
+The controlled-child tests exercise all five stage failures and the success path, ensure all stages run in order, and verify interruption kills the active child without running later stages. A real Prettier test checks protected `AGENTS.md` and repeat-run idempotence. The US1 runner tests remain part of the targeted run.
+
+Real-tool validation ran `python3 /private/tmp/verify-us2.py` in a disposable fixture with copied policies, Makefile and runner, plus individual dependency links. The fixture's logs are in `/var/folders/gk/b24b3dln5yb4ny_l3pyfx12h0000gn/T/quality-us2-bccsuq53`; it contained no real secrets. Results:
+
+- Fixable ESLint extra semicolon and Prettier spacing: exit 0; SHA-256 changed from `c8053bd0f9835afb6dc64754181d75caa9f74d0ddc067c4a2e1f86d0e0581502` to `d77756b92731f1f4b31d9867266f4e779a8d7eba22d4b7ef04bb26ce8ff505d5`. A second run exited 0 with the same corrected hash.
+- Mixed spacing and unresolved unused binding: exit 2 from Make; formatting applied, `no-unused-vars` remained visible, and every check stage ran. Corrected file SHA-256: `7335b0f9a6ca95b193598d8fdcef10b164e119330c239430201d27a914cf74f9`.
+- Missing pnpm: exit 2 from Make, with actionable spawn errors for all five stages. Formatter-only package script: exit 0 despite an unresolved lint violation and no quality runner stages.
+- Protected fixture SHA-256 values matched before and after: `AGENTS.md` `b18cc7ab7cbebcc4a38c26504490bb2e68cff9dd8a8bdb8751133807848b3046`; `.env.secret.ts` `621409fb5f3f54b1b0ceeef082dd2be410766bee3fb5819dca7deb7d5b398097`; `dist/generated.ts` `817cfc0885cbc7e6f1ac323111d26e4515f457110a3fc897b272b25a67043a0d`; `demo.secret.json` `adc6108125c1695bcc60737d467fdb09cc68b8f11e008ee56803a6162d0b7240`.
+
+T010–T013 are complete. The repository-wide correction and lint cleanup remain US3; `make format` was not run against the working checkout. Changes await review before committing.

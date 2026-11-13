@@ -1,4 +1,4 @@
-.PHONY: serve test migrate deploy lint
+.PHONY: serve test migrate deploy lint format
 
 ifneq ($(origin ENV), undefined)
 export ENV
@@ -9,6 +9,9 @@ serve:
 
 lint:
 	@node scripts/quality.mjs
+
+format:
+	@node scripts/quality.mjs --fix
 
 test:
 	@node scripts/test-workflow.mjs

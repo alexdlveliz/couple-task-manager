@@ -1,6 +1,11 @@
 import { spawn } from "node:child_process";
 
-const stages = ["lint", "format:check", "typecheck"];
+const stages = [
+  ...(process.argv[2] === "--fix" ? ["lint:fix", "format"] : []),
+  "lint",
+  "format:check",
+  "typecheck",
+];
 let active;
 let interrupted;
 let forcedStop;

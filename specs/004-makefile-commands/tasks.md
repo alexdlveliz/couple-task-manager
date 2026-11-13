@@ -64,8 +64,8 @@ description: "Implementation tasks for Makefile development commands"
 ## Phase 7: Polish & Cross-Cutting Concerns
 
 - [X] T018 Document all four commands, prerequisites, local ports, supported destinations, manually authored SQL migrations, separate remote migration operation, and credentials handling in `README.md` and `scripts/README.md`
-- [ ] T019 Run the applicable workflow tests and the end-to-end local scenarios in `specs/004-makefile-commands/quickstart.md`, recording actual results and any unavailable prerequisites in `specs/004-makefile-commands/validation.md`
-- [ ] T020 Review the final diff against privacy, local isolation, process cleanup, existing access/synchronization, Spanish accessibility, notification boundaries, and free-tier constraints in `.specify/memory/constitution.md`
+- [X] T019 Run the applicable workflow tests and the end-to-end local scenarios in `specs/004-makefile-commands/quickstart.md`, recording actual results and any unavailable prerequisites in `specs/004-makefile-commands/validation.md`
+- [X] T020 Review the final diff against privacy, local isolation, process cleanup, existing access/synchronization, Spanish accessibility, notification boundaries, and free-tier constraints in `.specify/memory/constitution.md`
 
 ## Dependencies & Execution Order
 

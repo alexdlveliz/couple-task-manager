@@ -27,7 +27,7 @@ Deployment, the full test workflow and remaining migration validation are outsid
 
 ## User Story 3 — 2026-11-13
 
-- Controlled deployment tests verified missing, empty and unsupported environment rejection; incomplete Wrangler, Worker, D1, assets and Firebase configuration rejection before building; production environment precedence; exact `build:production` and `wrangler deploy --env dev` arguments; named failures; suppressed child output; and no migration commands.
+- Controlled deployment tests verified missing, empty and unsupported environment rejection; incomplete Wrangler, Worker, D1, assets and Firebase configuration rejection before building; production environment precedence; exact `build:dev` and `wrangler deploy --env dev` arguments; named failures; suppressed child output; and no migration commands.
 - `pnpm run test:unit` passed 106 tests; typecheck passed. Integration passed 17 tests. A production-mode build using non-secret test Firebase values passed with the existing large-chunk warning.
 - `make deploy` and `make deploy ENV=unknown` rejected their destination. An invocation of `make deploy ENV=dev` against the current incomplete Firebase configuration was also rejected before the build. No deployment or remote migration was performed. Successful deployment routing was tested with substitutes only.
 
@@ -35,3 +35,10 @@ Deployment, the full test workflow and remaining migration validation are outsid
 
 - Deployment validation and the `build:dev` command use Vite's `dev` mode, with `NODE_ENV=production`. Controlled tests verified `.env.dev` overrides local demo values and `.env.production.local` is ignored for dev deployment.
 - `make serve` continues to use `.env.local` for its demo build and Vite development server. `pnpm run test:unit` passed 106 tests, typecheck passed, and a dev-mode production build passed with test Firebase values. No deployment was performed.
+
+## Phase 7 final verification — 2026-11-13
+
+- `make test` passed all five named checks, including the browser suite, with supervised local services. An initial sandboxed attempt could not bind port 9099; the run with loopback access succeeded.
+- `make serve` prepared the local environment and returned HTTP 200 at the application URL. Ctrl-C stopped the command, and ports 9099, 4000, 8787 and 5173 had no listeners afterward.
+- The controlled failure, interruption, port-conflict, migration routing and deployment routing scenarios ran as part of the unit suite. The isolated local migration and repeat application were verified as recorded above. No remote migration or deployment was performed.
+- Constitution review of the feature diff: workflow output suppresses child output, local commands validate demo settings and supervise owned processes, and deployment and remote migrations require explicit destinations. Application access, synchronization, offline behavior, Spanish UI, accessibility and notification code were not changed. No paid service or new production resource was introduced. The existing browser checks provide regression coverage, not proof of production readiness or notification delivery.

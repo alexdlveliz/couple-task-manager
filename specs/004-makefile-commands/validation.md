@@ -24,3 +24,14 @@ Deployment, the full test workflow and remaining migration validation are outsid
 - Controlled tests covered omitted, local, dev, empty, unsupported, missing, malformed and incomplete destinations; failure propagation; no-pending reporting; and suppression of command output. `pnpm run test:unit` passed 84 tests and typecheck passed.
 - An initial `make migrate` attempt was inadvertently run from the project directory and failed in the sandbox. Its command selected local D1; no remote operation was attempted. The isolated check then succeeded with local D1.
 - The temporary fixture's dependency symlink affected project dependency links; these were restored using `pnpm install --frozen-lockfile` before final verification.
+
+## User Story 3 — 2026-11-13
+
+- Controlled deployment tests verified missing, empty and unsupported environment rejection; incomplete Wrangler, Worker, D1, assets and Firebase configuration rejection before building; production environment precedence; exact `build:production` and `wrangler deploy --env dev` arguments; named failures; suppressed child output; and no migration commands.
+- `pnpm run test:unit` passed 106 tests; typecheck passed. Integration passed 17 tests. A production-mode build using non-secret test Firebase values passed with the existing large-chunk warning.
+- `make deploy` and `make deploy ENV=unknown` rejected their destination. An invocation of `make deploy ENV=dev` against the current incomplete Firebase configuration was also rejected before the build. No deployment or remote migration was performed. Successful deployment routing was tested with substitutes only.
+
+## Environment file selection
+
+- Deployment validation and the `build:dev` command use Vite's `dev` mode, with `NODE_ENV=production`. Controlled tests verified `.env.dev` overrides local demo values and `.env.production.local` is ignored for dev deployment.
+- `make serve` continues to use `.env.local` for its demo build and Vite development server. `pnpm run test:unit` passed 106 tests, typecheck passed, and a dev-mode production build passed with test Firebase values. No deployment was performed.

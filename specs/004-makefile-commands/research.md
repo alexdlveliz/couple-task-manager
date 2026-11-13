@@ -28,7 +28,7 @@
 
 **Decision**: Allow only an explicit `ENV=dev` initially, verify that its Wrangler environment and required production-mode Firebase build configuration are complete and consistent, then build for that selected environment and run Wrangler deployment with that exact environment. Refuse missing, unsupported or incomplete configuration before building. Never invoke remote migrations.
 
-**Rationale**: `wrangler.jsonc` defines a dev binding and Firebase project, but its presence alone does not prove credentials or client build configuration are available. Existing `build:production` uses Vite production mode; demo build settings must not leak into a remote deployment.
+**Rationale**: `wrangler.jsonc` defines a dev binding and Firebase project, but its presence alone does not prove credentials or client build configuration are available. The dev deployment uses Vite dev mode to load `.env.dev`, while `NODE_ENV=production` enables production build behavior; demo build settings must not leak into a remote deployment.
 
 **Alternatives considered**: Wrangler's default environment risks an implicit destination; using the demo build would point the deployed client at emulator settings; automatically applying migrations violates the specification. No live deployment is necessary to verify argument handling.
 

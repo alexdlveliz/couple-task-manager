@@ -1,4 +1,4 @@
-.PHONY: serve test migrate
+.PHONY: serve test migrate deploy
 
 ifneq ($(origin ENV), undefined)
 export ENV
@@ -9,6 +9,9 @@ serve:
 
 test:
 	@node scripts/test-workflow.mjs
+
+deploy:
+	@node scripts/deploy.mjs
 
 migrate:
 ifeq ($(origin ENV), undefined)

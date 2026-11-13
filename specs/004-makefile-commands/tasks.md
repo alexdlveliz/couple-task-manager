@@ -11,7 +11,7 @@ description: "Implementation tasks for Makefile development commands"
 ## Phase 1: Setup
 
 - [X] T001 Inspect existing commands and prerequisites in `package.json`, `wrangler.jsonc`, `firebase.json`, `scripts/seed-local.ts`, and `README.md`, including callers before changing any existing function
-- [ ] T002 Establish thin phony entry-point structure in `Makefile` and a command dispatch convention for helpers in `scripts/`
+- [X] T002 Establish thin phony entry-point structure in `Makefile` and a command dispatch convention for helpers in `scripts/`
 
 ## Phase 2: Foundational
 
@@ -57,13 +57,13 @@ description: "Implementation tasks for Makefile development commands"
 
 **Independent test**: With command stubs, reject missing, unsupported and incomplete destinations before build; verify valid `dev` uses the selected destination and invokes no migration.
 
-- [ ] T015 [P] [US3] Add controlled tests for missing, empty, unsupported and incomplete environments, correct dev build/deploy arguments, and absence of migration commands in `tests/unit/make-deploy.test.ts`
-- [ ] T016 [US3] Implement explicit `dev` configuration and non-emulator Firebase build validation, production-mode build, exact Wrangler environment selection, and safe failure reporting in `scripts/deploy.mjs`
-- [ ] T017 [US3] Wire `make deploy ENV=dev` to `scripts/deploy.mjs` in `Makefile` and verify the stubbed deployment scenarios in `specs/004-makefile-commands/quickstart.md`
+- [X] T015 [P] [US3] Add controlled tests for missing, empty, unsupported and incomplete environments, correct dev build/deploy arguments, and absence of migration commands in `tests/unit/make-deploy.test.ts`
+- [X] T016 [US3] Implement explicit `dev` configuration and non-emulator Firebase build validation, production-mode build, exact Wrangler environment selection, and safe failure reporting in `scripts/deploy.mjs`
+- [X] T017 [US3] Wire `make deploy ENV=dev` to `scripts/deploy.mjs` in `Makefile` and verify the stubbed deployment scenarios in `specs/004-makefile-commands/quickstart.md`
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T018 Document all four commands, prerequisites, local ports, supported destinations, manually authored SQL migrations, separate remote migration operation, and credentials handling in `README.md` and `scripts/README.md`
+- [X] T018 Document all four commands, prerequisites, local ports, supported destinations, manually authored SQL migrations, separate remote migration operation, and credentials handling in `README.md` and `scripts/README.md`
 - [ ] T019 Run the applicable workflow tests and the end-to-end local scenarios in `specs/004-makefile-commands/quickstart.md`, recording actual results and any unavailable prerequisites in `specs/004-makefile-commands/validation.md`
 - [ ] T020 Review the final diff against privacy, local isolation, process cleanup, existing access/synchronization, Spanish accessibility, notification boundaries, and free-tier constraints in `.specify/memory/constitution.md`
 

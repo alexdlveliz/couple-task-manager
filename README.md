@@ -52,6 +52,21 @@ Escribe y revisa manualmente los archivos SQL numerados en `migrations/`. Con la
 
 Para aplicar migraciones a la base remota de desarrollo, un operador autorizado debe revisar el SQL y la configuración `env.dev` de Wrangler, confirmar el identificador de D1 y proporcionar sus credenciales de Cloudflare externamente. Después puede ejecutar `make migrate ENV=dev`. El comando aplica las migraciones pendientes sin una confirmación interactiva adicional; una selección vacía o desconocida falla sin cambiar de destino. Las migraciones remotas son una operación independiente de la publicación.
 
+## Publicación en desarrollo
+
+`make deploy ENV=dev` compila en modo de producción y publica únicamente en el entorno `dev` de Wrangler. Antes de ejecutarlo, revisa el Worker, la carpeta de activos `dist`, la base D1 y el proyecto Firebase de `env.dev` en `wrangler.jsonc`; proporciona autorización de Cloudflare por los medios habituales de Wrangler. Configura `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN` y `VITE_USE_AUTH_EMULATOR=false` en el entorno o en `.env.dev`. El proyecto del cliente debe coincidir con `FIREBASE_PROJECT_ID` del Worker. Vite también carga `.env.local`; los valores de `.env.dev` tienen prioridad sobre `.env.local`; `.env.dev.local` y las variables del entorno tienen prioridad sobre `.env.dev`, así que comprueba que no queden valores del emulador en la configuración efectiva.
+
+Ejemplo de `.env.dev` (usa los valores de la aplicación web del proyecto Firebase):
+
+```dotenv
+VITE_FIREBASE_PROJECT_ID=couple-task-scheduler
+VITE_FIREBASE_API_KEY=<clave-web-de-firebase>
+VITE_FIREBASE_AUTH_DOMAIN=<dominio-de-autenticacion>
+VITE_USE_AUTH_EMULATOR=false
+```
+
+Revisa y aplica las migraciones remotas por separado con `make migrate ENV=dev` cuando corresponda. La publicación no las aplica. El comando de publicación requiere una selección explícita, rechaza configuraciones incompletas antes de compilar y muestra el paso fallido sin imprimir su salida; para investigar errores, ejecuta el paso correspondiente de forma controlada.
+
 ## Producción
 
 La configuración de producción requiere un proyecto Firebase propio, exactamente dos cuentas creadas de forma privada, sus UID y nombres en las dos filas D1, y un identificador de base real en Wrangler. Configura `FIREBASE_PROJECT_ID` y las variables `VITE_FIREBASE_*`; compila con `pnpm run build:production` sin activar `VITE_USE_AUTH_EMULATOR`. La entrada Worker de producción rechaza el modo de emulador. La entrada `src/worker/local.ts` es solo para el entorno de desarrollo local.

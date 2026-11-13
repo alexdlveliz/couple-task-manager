@@ -16,7 +16,8 @@
     "dev": "pnpm run build && concurrently -k 'wrangler dev --local --port 8787 --env local' 'vite --host 127.0.0.1'",
     "preview:worker": "wrangler dev --local --port 8787 --env local",
     "seed:local": "tsx scripts/seed-local.ts",
-    "build:production": "vite build --mode production"
+    "build:production": "vite build --mode production",
+    "build:dev": "vite build --mode dev"
   },
   "dependencies": {
     "@js-temporal/polyfill": "0.5.1",

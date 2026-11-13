@@ -101,11 +101,11 @@ Open `http://127.0.0.1:8787` on both phones. Both use the same local Worker and 
 
 Use these fixture accounts only with the local Auth emulator:
 
-| Account | Password |
-| --- | --- |
-| `partner-a@example.test` | `local-demo-password-a` |
-| `partner-b@example.test` | `local-demo-password-b` |
-| `outsider@example.test` | `local-demo-password-outsider` |
+| Account                  | Password                       |
+| ------------------------ | ------------------------------ |
+| `partner-a@example.test` | `local-demo-password-a`        |
+| `partner-b@example.test` | `local-demo-password-b`        |
+| `outsider@example.test`  | `local-demo-password-outsider` |
 
 The first two accounts are the authorized partners. The outsider is useful for confirming that a signed-in, unauthorized user cannot read the board. The seeder is restricted to the local demo project and local D1. See [scripts/README.md](scripts/README.md) for fixture details.
 

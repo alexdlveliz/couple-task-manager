@@ -12,7 +12,7 @@
 **/.playwright-mcp/
 **/.worktrees/
 **/worktrees/
-.agents/worktrees/
+**/.agents/
 .specify/integrations/packages/
 .specify/integrations/packages.json
 .specify/feature.json
@@ -39,3 +39,8 @@ pnpm-lock.yaml
 package-lock.json
 yarn.lock
 **/AGENTS.md
+
+# Documentation and md files
+**/*.md
+specs/
+.specify/

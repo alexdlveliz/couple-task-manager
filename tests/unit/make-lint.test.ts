@@ -87,6 +87,24 @@ function calls(file: string): unknown {
 }
 
 describe("read-only quality workflow", () => {
+  it("excludes all .agents files from linting and formatting", async () => {
+    const file = ".agents/skills/example.mjs";
+    const formatInfo = await getFileInfo(file, {
+      ignorePath: resolve(".prettierignore"),
+    });
+    expect(formatInfo.ignored).toBe(true);
+    const probe = spawnSync(
+      process.execPath,
+      [
+        "--input-type=module",
+        "-e",
+        'import { ESLint } from "eslint"; console.log(await new ESLint().isPathIgnored(".agents/skills/example.mjs"));',
+      ],
+      { cwd: resolve("."), encoding: "utf8", timeout: 10000 },
+    );
+    expect(probe.status, probe.stderr).toBe(0);
+    expect(probe.stdout.trim()).toBe("true");
+  });
   it.each([
     "fixture.secret.json",
     "fixture.secret.yaml",

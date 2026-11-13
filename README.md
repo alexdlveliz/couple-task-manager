@@ -46,6 +46,18 @@ pnpm run preview:worker
 
 Ejecuta `pnpm run test:browser` en otra terminal con el Worker compilado en `127.0.0.1:8787`. Cierra el Worker de `pnpm run dev` antes de iniciar la vista previa para evitar conflictos de puerto. Los resultados y verificaciones pendientes se registran en [validation.md](specs/001-shared-task-board/validation.md).
 
+## Calidad del código
+
+Con Node ^22.12.0, ^24.0.0 o >=26.0.0 y pnpm 12.16.1, instala primero las dependencias con `pnpm install --frozen-lockfile`. Estas comprobaciones no requieren servicios locales ni credenciales.
+
+- `make lint` comprueba ESLint, formato y tipos sin modificar archivos.
+- `make format` aplica correcciones automáticas de ESLint y Prettier, y después ejecuta todas las comprobaciones. Revisa los cambios antes de guardarlos en un commit.
+- Para ejecutar etapas individuales están disponibles `pnpm run lint`, `pnpm run lint:fix`, `pnpm run format:check`, `pnpm run format`, `pnpm run typecheck` y `pnpm run quality`. `format` solo ejecuta Prettier; `quality` ejecuta las comprobaciones sin escribir archivos.
+
+ESLint cubre JavaScript y TypeScript mantenidos, con análisis de tipos estricto para TypeScript; JavaScript no recibe análisis de tipos. Prettier cubre los formatos de texto compatibles, incluidos TS/JS, JSON/JSONC, YAML, Markdown, CSS, HTML, SVG y webmanifest, también en directorios ocultos mantenidos. SQL, Makefiles, scripts de shell y archivos binarios no están cubiertos por el formateador.
+
+Se excluyen `.agents/`, dependencias, archivos generados, cachés, resultados de pruebas, estado local, secretos y archivos de bloqueo administrados por el gestor de paquetes. `AGENTS.md` está protegido contra escritura automática. Las excepciones para datos deliberadamente inválidos deben ser específicas y justificadas junto al código; no desactives reglas estrictas para todo el proyecto. Los comandos no instalan dependencias automáticamente.
+
 ## Migraciones D1
 
 Escribe y revisa manualmente los archivos SQL numerados en `migrations/`. Con las dependencias instaladas y la configuración D1 local de `wrangler.jsonc`, aplica las migraciones pendientes a la base local con `make migrate` o `make migrate ENV=local`. Repetir el comando cuando no hay migraciones pendientes informa que no hay nada por aplicar.

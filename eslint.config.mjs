@@ -21,7 +21,7 @@ export default defineConfig(
       "**/.playwright-mcp/**",
       "**/.worktrees/**",
       "**/worktrees/**",
-      ".agents/worktrees/**",
+      "**/.agents/**",
       ".specify/integrations/packages/**",
       ".specify/extensions/*/local-config.*",
       "**/.env*",

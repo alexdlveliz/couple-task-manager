@@ -4,13 +4,19 @@ Aplicación privada en español para dos personas. Utiliza React, Cloudflare Wor
 
 ## Desarrollo local
 
-Requisitos: Node.js 22.12 o superior compatible con las dependencias fijadas, pnpm 12.16.1, OpenSSL en el PATH y las dependencias de Playwright. Las pruebas generan certificados temporales; no se almacenan claves privadas en el repositorio. Todo el siguiente flujo usa el proyecto de demostración `demo-shared-task-board` y D1 local:
+Requisitos: make, `ps`, Node.js 22.12 o superior compatible con las dependencias fijadas, pnpm 12.16.1, Java para el emulador de Firebase, OpenSSL en el PATH y las dependencias de Playwright. Las pruebas generan certificados temporales; no se almacenan claves privadas en el repositorio. Todo el siguiente flujo usa el proyecto de demostración `demo-shared-task-board` y D1 local:
 
 ```sh
 pnpm install --frozen-lockfile
 cp .env.example .env.local
 cp .dev.vars.example .dev.vars.local
 pnpm exec playwright install
+make serve
+```
+
+El comando prepara D1 local y las cuentas de demostración, inicia el emulador y la aplicación, y detiene los servicios que inició al pulsar Ctrl-C. Requiere libres los puertos 9099, 4000, 8787 y 5173. También se puede iniciar manualmente:
+
+```sh
 pnpm exec firebase emulators:start --only auth --project demo-shared-task-board
 ```
 
@@ -26,7 +32,9 @@ Abre `http://127.0.0.1:5173`. Las cuentas de prueba y sus contraseñas locales e
 
 ## Pruebas
 
-Con el emulador de autenticación activo y la base local migrada y preparada:
+Ejecuta `make test` con los requisitos y archivos de configuración locales descritos arriba. Comprueba tipos, pruebas unitarias y de integración, compilación y pruebas de navegador; prepara el emulador y D1 local para estas últimas y detiene los servicios que inicia. Requiere libres los puertos 9099, 4000 y 8787. Un fallo detiene la secuencia e identifica el paso fallido.
+
+También puedes ejecutar las comprobaciones manualmente con el emulador activo y la base local migrada y preparada:
 
 ```sh
 pnpm run typecheck
@@ -37,6 +45,27 @@ pnpm run preview:worker
 ```
 
 Ejecuta `pnpm run test:browser` en otra terminal con el Worker compilado en `127.0.0.1:8787`. Cierra el Worker de `pnpm run dev` antes de iniciar la vista previa para evitar conflictos de puerto. Los resultados y verificaciones pendientes se registran en [validation.md](specs/001-shared-task-board/validation.md).
+
+## Migraciones D1
+
+Escribe y revisa manualmente los archivos SQL numerados en `migrations/`. Con las dependencias instaladas y la configuración D1 local de `wrangler.jsonc`, aplica las migraciones pendientes a la base local con `make migrate` o `make migrate ENV=local`. Repetir el comando cuando no hay migraciones pendientes informa que no hay nada por aplicar.
+
+Para aplicar migraciones a la base remota de desarrollo, un operador autorizado debe revisar el SQL y la configuración `env.dev` de Wrangler, confirmar el identificador de D1 y proporcionar sus credenciales de Cloudflare externamente. Después puede ejecutar `make migrate ENV=dev`. El comando aplica las migraciones pendientes sin una confirmación interactiva adicional; una selección vacía o desconocida falla sin cambiar de destino. Las migraciones remotas son una operación independiente de la publicación.
+
+## Publicación en desarrollo
+
+`make deploy ENV=dev` compila en modo de producción y publica únicamente en el entorno `dev` de Wrangler. Antes de ejecutarlo, revisa el Worker, la carpeta de activos `dist`, la base D1 y el proyecto Firebase de `env.dev` en `wrangler.jsonc`; proporciona autorización de Cloudflare por los medios habituales de Wrangler. Configura `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN` y `VITE_USE_AUTH_EMULATOR=false` en el entorno o en `.env.dev`. El proyecto del cliente debe coincidir con `FIREBASE_PROJECT_ID` del Worker. Vite también carga `.env.local`; los valores de `.env.dev` tienen prioridad sobre `.env.local`; `.env.dev.local` y las variables del entorno tienen prioridad sobre `.env.dev`, así que comprueba que no queden valores del emulador en la configuración efectiva.
+
+Ejemplo de `.env.dev` (usa los valores de la aplicación web del proyecto Firebase):
+
+```dotenv
+VITE_FIREBASE_PROJECT_ID=couple-task-scheduler
+VITE_FIREBASE_API_KEY=<clave-web-de-firebase>
+VITE_FIREBASE_AUTH_DOMAIN=<dominio-de-autenticacion>
+VITE_USE_AUTH_EMULATOR=false
+```
+
+Revisa y aplica las migraciones remotas por separado con `make migrate ENV=dev` cuando corresponda. La publicación no las aplica. El comando de publicación requiere una selección explícita, rechaza configuraciones incompletas antes de compilar y muestra el paso fallido sin imprimir su salida; para investigar errores, ejecuta el paso correspondiente de forma controlada.
 
 ## Producción
 

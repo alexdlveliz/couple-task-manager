@@ -10,3 +10,10 @@
 - `pnpm run test:browser` against the running demo: 111 passed, 3 skipped, 1 failed. The mobile Safari cross-tab 403 test timed out during `context.close()` after WebKit logged an internal error. The full browser suite is not green.
 
 Deployment, the full test workflow and remaining migration validation are outside this MVP and remain open in tasks.md.
+
+## User Story 2 — 2026-11-13
+
+- `make test` completed successfully on the second full run: typecheck, unit, integration, demo build and browser checks passed, with local Auth, migrations, fixtures and Worker preview supervised by the command. Ports 9099, 4000 and 8787 were released afterward.
+- The first full run correctly failed at `test:browser` on the mobile Chrome cross-tab 403 scenario. That case passed when rerun alone; the subsequent full run passed. The earlier mobile Safari timeout is recorded above.
+- Integration setup now supplies an isolated D1 test binding: `pnpm run test:integration` passed all 17 tests.
+- Final `pnpm run test:unit` passed all 75 tests, including controlled failures for all five checks, startup failures, readiness timeout, interruption, and cleanup of detached descendants. Final typecheck passed.

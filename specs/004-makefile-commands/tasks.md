@@ -37,9 +37,9 @@ description: "Implementation tasks for Makefile development commands"
 
 **Independent test**: Run `make test`; force each named check to fail separately and verify nonzero status and cleanup.
 
-- [ ] T009 [P] [US2] Add controlled tests for each named check failure, readiness timeout, interruption, and owned-service cleanup in `tests/unit/make-test.test.ts`
-- [ ] T010 [US2] Implement ordered typecheck, unit, integration, demo build, and browser steps with local Auth, local migration/seeding, and Worker preview in `scripts/test-workflow.mjs`
-- [ ] T011 [US2] Wire `make test` to `scripts/test-workflow.mjs` in `Makefile` and execute the checks described in `specs/004-makefile-commands/quickstart.md`
+- [X] T009 [P] [US2] Add controlled tests for each named check failure, readiness timeout, interruption, and owned-service cleanup in `tests/unit/make-test.test.ts`
+- [X] T010 [US2] Implement ordered typecheck, unit, integration, demo build, and browser steps with local Auth, local migration/seeding, and Worker preview in `scripts/test-workflow.mjs`
+- [X] T011 [US2] Wire `make test` to `scripts/test-workflow.mjs` in `Makefile` and execute the checks described in `specs/004-makefile-commands/quickstart.md`
 
 ## Phase 5: User Story 4 — Apply migrations (P2)
 

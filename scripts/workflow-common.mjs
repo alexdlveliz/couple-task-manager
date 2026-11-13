@@ -28,6 +28,8 @@ export function validatePrerequisites() {
     const result = spawnSync(command, [command === 'java' ? '-version' : '--version'], { stdio: 'ignore' });
     if (result.error || result.status !== 0) throw new Error(`Missing or unusable prerequisite: ${command}. Install it and check PATH.`);
   }
+  const ps = spawnSync('ps', ['-p', String(process.pid), '-o', 'pid='], { stdio: 'ignore' });
+  if (ps.error || ps.status !== 0) throw new Error('Missing or unusable prerequisite: ps. Install it and allow process inspection.');
   if (!existsSync('node_modules/.bin/firebase') || !existsSync('node_modules/.bin/wrangler')) throw new Error('Project dependencies are missing. Run pnpm install --frozen-lockfile.');
 }
 
@@ -79,9 +81,29 @@ export class Supervisor {
   async cleanup() {
     if (this.#stopping) return;
     this.#stopping = true;
+    // Some tools create their own process groups. Capture only descendants of
+    // the processes we started before terminating their parent groups.
+    const snapshot = spawnSync('ps', ['-axo', 'pid=,ppid='], { encoding: 'utf8' });
+    const descendants = new Set(this.#groups);
+    if (snapshot.status !== 0 && this.#groups.size) {
+      console.error('Could not inspect child processes for cleanup; check for remaining local services.');
+      process.exitCode = 1;
+    }
+    if (snapshot.status === 0) {
+      const rows = snapshot.stdout.trim().split('\n').map((line) => line.trim().split(/\s+/).map(Number));
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (const [pid, parent] of rows) {
+          if (descendants.has(parent) && !descendants.has(pid)) { descendants.add(pid); changed = true; }
+        }
+      }
+    }
     for (const pid of this.#groups) { try { process.kill(-pid, 'SIGTERM'); } catch {} }
+    for (const pid of descendants) { try { process.kill(pid, 'SIGTERM'); } catch {} }
     await new Promise((resolve) => setTimeout(resolve, 500));
     for (const pid of this.#groups) { try { process.kill(-pid, 'SIGKILL'); } catch {} }
+    for (const pid of descendants) { try { process.kill(pid, 'SIGKILL'); } catch {} }
     this.#groups.clear();
   }
 }

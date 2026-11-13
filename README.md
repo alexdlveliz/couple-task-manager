@@ -4,7 +4,7 @@ Aplicación privada en español para dos personas. Utiliza React, Cloudflare Wor
 
 ## Desarrollo local
 
-Requisitos: make, Node.js 22.12 o superior compatible con las dependencias fijadas, pnpm 12.16.1, Java para el emulador de Firebase, OpenSSL en el PATH y las dependencias de Playwright. Las pruebas generan certificados temporales; no se almacenan claves privadas en el repositorio. Todo el siguiente flujo usa el proyecto de demostración `demo-shared-task-board` y D1 local:
+Requisitos: make, `ps`, Node.js 22.12 o superior compatible con las dependencias fijadas, pnpm 12.16.1, Java para el emulador de Firebase, OpenSSL en el PATH y las dependencias de Playwright. Las pruebas generan certificados temporales; no se almacenan claves privadas en el repositorio. Todo el siguiente flujo usa el proyecto de demostración `demo-shared-task-board` y D1 local:
 
 ```sh
 pnpm install --frozen-lockfile
@@ -32,7 +32,9 @@ Abre `http://127.0.0.1:5173`. Las cuentas de prueba y sus contraseñas locales e
 
 ## Pruebas
 
-Con el emulador de autenticación activo y la base local migrada y preparada:
+Ejecuta `make test` con los requisitos y archivos de configuración locales descritos arriba. Comprueba tipos, pruebas unitarias y de integración, compilación y pruebas de navegador; prepara el emulador y D1 local para estas últimas y detiene los servicios que inicia. Requiere libres los puertos 9099, 4000 y 8787. Un fallo detiene la secuencia e identifica el paso fallido.
+
+También puedes ejecutar las comprobaciones manualmente con el emulador activo y la base local migrada y preparada:
 
 ```sh
 pnpm run typecheck

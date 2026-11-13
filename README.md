@@ -46,6 +46,12 @@ pnpm run preview:worker
 
 Ejecuta `pnpm run test:browser` en otra terminal con el Worker compilado en `127.0.0.1:8787`. Cierra el Worker de `pnpm run dev` antes de iniciar la vista previa para evitar conflictos de puerto. Los resultados y verificaciones pendientes se registran en [validation.md](specs/001-shared-task-board/validation.md).
 
+## Migraciones D1
+
+Escribe y revisa manualmente los archivos SQL numerados en `migrations/`. Con las dependencias instaladas y la configuración D1 local de `wrangler.jsonc`, aplica las migraciones pendientes a la base local con `make migrate` o `make migrate ENV=local`. Repetir el comando cuando no hay migraciones pendientes informa que no hay nada por aplicar.
+
+Para aplicar migraciones a la base remota de desarrollo, un operador autorizado debe revisar el SQL y la configuración `env.dev` de Wrangler, confirmar el identificador de D1 y proporcionar sus credenciales de Cloudflare externamente. Después puede ejecutar `make migrate ENV=dev`. El comando aplica las migraciones pendientes sin una confirmación interactiva adicional; una selección vacía o desconocida falla sin cambiar de destino. Las migraciones remotas son una operación independiente de la publicación.
+
 ## Producción
 
 La configuración de producción requiere un proyecto Firebase propio, exactamente dos cuentas creadas de forma privada, sus UID y nombres en las dos filas D1, y un identificador de base real en Wrangler. Configura `FIREBASE_PROJECT_ID` y las variables `VITE_FIREBASE_*`; compila con `pnpm run build:production` sin activar `VITE_USE_AUTH_EMULATOR`. La entrada Worker de producción rechaza el modo de emulador. La entrada `src/worker/local.ts` es solo para el entorno de desarrollo local.

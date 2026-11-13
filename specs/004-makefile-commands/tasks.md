@@ -47,9 +47,9 @@ description: "Implementation tasks for Makefile development commands"
 
 **Independent test**: Apply a reviewed SQL migration to isolated local D1, repeat with no pending work, and use stubs to verify destination routing and invalid-input rejection.
 
-- [ ] T012 [P] [US4] Add routing and failure tests for omitted `ENV`, `local`, `dev`, explicitly empty, unknown and incomplete configuration, and no-pending migrations in `tests/unit/make-migrate.test.ts`
-- [ ] T013 [US4] Implement destination validation and explicit Wrangler `DB` migration application with `--env local --local` or `--env dev --remote`, no fallback, and actionable failure handling in `scripts/migrate.mjs`
-- [ ] T014 [US4] Wire `make migrate` in `Makefile`, preserving the distinction between omitted and explicitly empty `ENV`, and verify isolated local migration and repeat behavior using `specs/004-makefile-commands/quickstart.md`
+- [X] T012 [P] [US4] Add routing and failure tests for omitted `ENV`, `local`, `dev`, explicitly empty, unknown and incomplete configuration, and no-pending migrations in `tests/unit/make-migrate.test.ts`
+- [X] T013 [US4] Implement destination validation and explicit Wrangler `DB` migration application with `--env local --local` or `--env dev --remote`, no fallback, and actionable failure handling in `scripts/migrate.mjs`
+- [X] T014 [US4] Wire `make migrate` in `Makefile`, preserving the distinction between omitted and explicitly empty `ENV`, and verify isolated local migration and repeat behavior using `specs/004-makefile-commands/quickstart.md`
 
 ## Phase 6: User Story 3 — Deploy to a selected environment (P3)
 

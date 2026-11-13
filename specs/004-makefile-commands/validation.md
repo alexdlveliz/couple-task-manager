@@ -17,3 +17,10 @@ Deployment, the full test workflow and remaining migration validation are outsid
 - The first full run correctly failed at `test:browser` on the mobile Chrome cross-tab 403 scenario. That case passed when rerun alone; the subsequent full run passed. The earlier mobile Safari timeout is recorded above.
 - Integration setup now supplies an isolated D1 test binding: `pnpm run test:integration` passed all 17 tests.
 - Final `pnpm run test:unit` passed all 75 tests, including controlled failures for all five checks, startup failures, readiness timeout, interruption, and cleanup of detached descendants. Final typecheck passed.
+
+## User Story 4 — 2026-11-13
+
+- In a temporary local D1 store, `make migrate` applied a representative manually authored SQL migration. Schema inspection confirmed its table and migration record; `make migrate ENV=local` then reported no pending migrations. No remote migration was run.
+- Controlled tests covered omitted, local, dev, empty, unsupported, missing, malformed and incomplete destinations; failure propagation; no-pending reporting; and suppression of command output. `pnpm run test:unit` passed 84 tests and typecheck passed.
+- An initial `make migrate` attempt was inadvertently run from the project directory and failed in the sandbox. Its command selected local D1; no remote operation was attempted. The isolated check then succeeded with local D1.
+- The temporary fixture's dependency symlink affected project dependency links; these were restored using `pnpm install --frozen-lockfile` before final verification.

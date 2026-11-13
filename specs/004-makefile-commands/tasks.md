@@ -10,14 +10,14 @@ description: "Implementation tasks for Makefile development commands"
 
 ## Phase 1: Setup
 
-- [ ] T001 Inspect existing commands and prerequisites in `package.json`, `wrangler.jsonc`, `firebase.json`, `scripts/seed-local.ts`, and `README.md`, including callers before changing any existing function
+- [X] T001 Inspect existing commands and prerequisites in `package.json`, `wrangler.jsonc`, `firebase.json`, `scripts/seed-local.ts`, and `README.md`, including callers before changing any existing function
 - [ ] T002 Establish thin phony entry-point structure in `Makefile` and a command dispatch convention for helpers in `scripts/`
 
 ## Phase 2: Foundational
 
-- [ ] T003 Implement reusable named-step execution, actionable failure reporting, and secret-safe diagnostics in `scripts/workflow-common.mjs`
-- [ ] T004 Implement owned child-process tracking, bounded readiness checks, signal handling, and cleanup of descendants without killing unrelated processes in `scripts/workflow-common.mjs`
-- [ ] T005 Implement local prerequisite, demo configuration, and required-port validation in `scripts/workflow-common.mjs`, using `firebase.json` and `wrangler.jsonc` as the configuration sources
+- [X] T003 Implement reusable named-step execution, actionable failure reporting, and secret-safe diagnostics in `scripts/workflow-common.mjs`
+- [X] T004 Implement owned child-process tracking, bounded readiness checks, signal handling, and cleanup of descendants without killing unrelated processes in `scripts/workflow-common.mjs`
+- [X] T005 Implement local prerequisite, demo configuration, and required-port validation in `scripts/workflow-common.mjs`, using `firebase.json` and `wrangler.jsonc` as the configuration sources
 
 **Checkpoint**: Shared validation and lifecycle utilities are available to the story workflows.
 
@@ -27,9 +27,9 @@ description: "Implementation tasks for Makefile development commands"
 
 **Independent test**: Start with documented prerequisites, open the app, stop the command, and verify owned services stop; repeat with a missing prerequisite and an occupied port.
 
-- [ ] T006 [P] [US1] Add controlled startup, port-conflict, failed preparation, interruption, and owned-process cleanup checks in `tests/unit/make-serve.test.ts`
-- [ ] T007 [US1] Implement local-only Auth emulator startup and readiness, local D1 migrations, fixture seeding, app startup, and cleanup in `scripts/serve.mjs` using `scripts/workflow-common.mjs`
-- [ ] T008 [US1] Wire `make serve` to `scripts/serve.mjs` in `Makefile` and verify the live scenario in `specs/004-makefile-commands/quickstart.md`
+- [X] T006 [P] [US1] Add controlled startup, port-conflict, failed preparation, interruption, and owned-process cleanup checks in `tests/unit/make-serve.test.ts`
+- [X] T007 [US1] Implement local-only Auth emulator startup and readiness, local D1 migrations, fixture seeding, app startup, and cleanup in `scripts/serve.mjs` using `scripts/workflow-common.mjs`
+- [X] T008 [US1] Wire `make serve` to `scripts/serve.mjs` in `Makefile` and verify the live scenario in `specs/004-makefile-commands/quickstart.md`
 
 ## Phase 4: User Story 2 — Run project checks (P2)
 

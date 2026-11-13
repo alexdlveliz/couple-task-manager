@@ -21,6 +21,10 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === "object" && !Array.isArray(value);
 const isRevision = (value: unknown): value is number =>
   Number.isSafeInteger(value) && (value as number) >= 0;
+const matchesBoardTag = (tag: string | null, revision: number): boolean => {
+  const expected = `"board-r${String(revision)}"`;
+  return tag === expected || tag === `W/${expected}`;
+};
 function isTask(value: unknown): value is Task {
   return (
     isObject(value) &&
@@ -162,14 +166,14 @@ export function createApi(
       if (data === null) {
         if (
           revision === undefined ||
-          response.headers.get("ETag") !== headers["If-None-Match"]
+          !matchesBoardTag(response.headers.get("ETag"), revision)
         )
           return invalid();
         return null;
       }
       if (
         !isBoard(data) ||
-        response.headers.get("ETag") !== `"board-r${String(data.revision)}"`
+        !matchesBoardTag(response.headers.get("ETag"), data.revision)
       )
         return invalid();
       return data;

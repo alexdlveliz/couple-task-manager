@@ -53,8 +53,10 @@ paths:
         singleton revision; if equal, avoid reading task rows. Otherwise read all
         tasks and metadata in one consistent D1 read batch and return that revision.
         Includes completed tasks, ordered by createdAt then id, with no pagination.
-        A snapshot's ETag is exactly quoted board-r followed by its decimal revision,
-        for example "board-r12". A mutation response cannot replace a complete snapshot.
+        The Worker emits an ETag consisting of quoted board-r followed by its decimal
+        revision, for example "board-r12". Intermediaries may return its weak form,
+        W/"board-r12"; clients accept either form when the revision matches.
+        A mutation response cannot replace a complete snapshot.
       parameters:
         - name: If-None-Match
           in: header
@@ -175,10 +177,10 @@ components:
         type: string
         const: no-store
     BoardETag:
-      description: Quoted board-r plus nonnegative decimal revision.
+      description: Quoted board-r plus nonnegative decimal revision, optionally prefixed by W/.
       schema:
         type: string
-        pattern: '^"board-r[0-9]+"$'
+        pattern: '^(W/)?"board-r[0-9]+"$'
       example: '"board-r12"'
   schemas:
     Revision:

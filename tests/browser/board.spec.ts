@@ -11,6 +11,43 @@ async function login(context: BrowserContext, email: string, password: string) {
   return page;
 }
 
+test("displays and refreshes a board served with weak ETags", async ({
+  partnerA,
+}) => {
+  const page = await partnerA.newPage();
+  await page.route("**/api/tasks", async (route) => {
+    if (route.request().headers()["if-none-match"] === '"board-r2"') {
+      await route.fulfill({ status: 304, headers: { ETag: 'W/"board-r2"' } });
+      return;
+    }
+    await route.fulfill({
+      json: {
+        revision: 2,
+        tasks: [
+          {
+            id: "weak-etag-task",
+            title: "Tarea con ETag débil",
+            assigneeUid: "fixture",
+            status: "todo",
+            deadline: null,
+            createdAt: "2026-01-01T00:00:00Z",
+            updatedAt: "2026-01-01T00:00:00Z",
+          },
+        ],
+      },
+      headers: { ETag: 'W/"board-r2"' },
+    });
+  });
+  await page.goto("http://127.0.0.1:8787");
+  await page.getByLabel("Correo electrónico").fill("partner-a@example.test");
+  await page.getByLabel("Contraseña").fill("local-demo-password-a");
+  await page.getByRole("button", { name: "Entrar" }).click();
+  await expect(page.getByText("Tarea con ETag débil")).toBeVisible();
+  await page.getByRole("button", { name: "Actualizar" }).click();
+  await expect(page.getByText("Actualizado", { exact: true })).toBeVisible();
+  await expect(page.getByText("Tarea con ETag débil")).toBeVisible();
+});
+
 test("both partners can create, reassign and complete the same task", async ({
   partnerA,
   partnerB,

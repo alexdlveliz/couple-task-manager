@@ -93,3 +93,30 @@ it("rejects a full board whose ETag does not match its revision", async () => {
   );
   await expect(createApi(user, () => {}).board()).rejects.toThrow();
 });
+it("accepts weak ETags for a matching board and conditional response", async () => {
+  vi.spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(
+      Response.json(
+        { tasks: [], revision: 2 },
+        { headers: { ETag: 'W/"board-r2"' } },
+      ),
+    )
+    .mockResolvedValueOnce(
+      new Response(null, { status: 304, headers: { ETag: 'W/"board-r2"' } }),
+    );
+  const api = createApi(user, () => {});
+  await expect(api.board()).resolves.toEqual({ tasks: [], revision: 2 });
+  await expect(api.board(2)).resolves.toBeNull();
+});
+it.each([undefined, 'W/"board-r1"', 'w/"board-r2"', 'W/"board-r02"'])(
+  "rejects missing, mismatched, or malformed board ETag %s",
+  async (tag) => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      Response.json(
+        { tasks: [], revision: 2 },
+        { headers: tag ? { ETag: tag } : {} },
+      ),
+    );
+    await expect(createApi(user, () => {}).board()).rejects.toThrow();
+  },
+);

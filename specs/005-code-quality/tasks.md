@@ -10,16 +10,16 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 Verify `feature/linter-and-formatter`, inspect callers and existing workflow tests, and inventory maintained tracked/untracked files and exclusions; record coverage and compatibility findings in specs/005-code-quality/research.md before changing functions.
-- [ ] T002 Install and pin mutually compatible development versions of ESLint, @eslint/js, typescript-eslint, eslint-plugin-react-hooks, globals, Prettier and eslint-config-prettier in package.json and pnpm-lock.yaml; verify peer dependencies and existing supported Node engine ranges without changing runtime requirements.
+- [x] T001 Verify `feature/linter-and-formatter`, inspect callers and existing workflow tests, and inventory maintained tracked/untracked files and exclusions; record coverage and compatibility findings in specs/005-code-quality/research.md before changing functions.
+- [x] T002 Install and pin mutually compatible development versions of ESLint, @eslint/js, typescript-eslint, eslint-plugin-react-hooks, globals, Prettier and eslint-config-prettier in package.json and pnpm-lock.yaml; verify peer dependencies and existing supported Node engine ranges without changing runtime requirements.
 
 ## Phase 2: Foundational
 
 **Purpose**: Shared policies required by all workflows. Complete before story implementation.
 
-- [ ] T003 [P] Add eslint.config.mjs with flat recommended JavaScript rules, strictTypeChecked TypeScript rules, projectService and repository tsconfigRootDir, scoped client/Worker/Node globals, React Hooks correctness, zero tolerated warnings and unused suppression errors; keep tsconfig.json strict and declare narrow justified exceptions only.
-- [ ] T004 [P] Add .prettierrc.json and .prettierignore with two spaces, semicolons, double quotes, trailing commas, LF, 80-column width and preserved prose wrapping; cover supported maintained text including eligible dot-directories, excluding generated output, dependencies, caches, local state, secrets, pnpm-lock.yaml and protected AGENTS.md.
-- [ ] T005 Reconcile lint and format coverage in eslint.config.mjs and .prettierignore against T001 inventory, place eslint-config-prettier/flat last, and verify effective TS/TSX/MJS configurations with the conflict helper; document unsupported formats and justified exclusions in specs/005-code-quality/research.md.
+- [x] T003 [P] Add eslint.config.mjs with flat recommended JavaScript rules, strictTypeChecked TypeScript rules, projectService and repository tsconfigRootDir, scoped client/Worker/Node globals, React Hooks correctness, zero tolerated warnings and unused suppression errors; keep tsconfig.json strict and declare narrow justified exceptions only.
+- [x] T004 [P] Add .prettierrc.json and .prettierignore with two spaces, semicolons, double quotes, trailing commas, LF, 80-column width and preserved prose wrapping; cover supported maintained text including eligible dot-directories, excluding generated output, dependencies, caches, local state, secrets, pnpm-lock.yaml and protected AGENTS.md.
+- [x] T005 Reconcile lint and format coverage in eslint.config.mjs and .prettierignore against T001 inventory, place eslint-config-prettier/flat last, and verify effective TS/TSX/MJS configurations with the conflict helper; document unsupported formats and justified exclusions in specs/005-code-quality/research.md.
 
 ## Phase 3: User Story 1 — Check project conventions (P1, MVP)
 
@@ -27,10 +27,10 @@
 
 **Independent test**: Run against a compliant isolated fixture and controlled convention, formatting and compiler failures; all stages run, failures remain nonzero, and file hashes stay unchanged. Existing repository cleanup is delivered in US3, so pre-adoption repository findings are expected.
 
-- [ ] T006 [US1] Add failing behavioral checks in tests/unit/make-lint.test.ts for Make dispatch, all-stage execution, earlier failure preservation, labeled diagnostics, missing commands/configuration, and interruption stopping the active child and subsequent stages; use controlled child processes rather than real services.
-- [ ] T007 [US1] Implement check mode in scripts/quality.mjs using argument arrays and inherited output, labeled sequential lint/format-check/typecheck stages, aggregated failure, actionable spawn errors and signal cleanup without network, ENV selection, credentials or service startup; satisfy T006.
-- [ ] T008 [US1] Wire repository-local lint, format:check and quality package scripts in package.json and a phony lint target in Makefile invoking the runner; preserve existing typecheck and serve/test/migrate/deploy behavior.
-- [ ] T009 [US1] Execute isolated positive/negative coverage checks for unused script bindings, explicit any, unsafe TypeScript operations, Hooks violations, documentation/configuration drift and a compiler-only error across src/, tests/, scripts/ and root configuration; verify excluded fixtures are untouched and record commands, diagnostic identifiers, file hashes and outcomes in specs/005-code-quality/validation.md.
+- [x] T006 [US1] Add failing behavioral checks in tests/unit/make-lint.test.ts for Make dispatch, all-stage execution, earlier failure preservation, labeled diagnostics, missing commands/configuration, and interruption stopping the active child and subsequent stages; use controlled child processes rather than real services.
+- [x] T007 [US1] Implement check mode in scripts/quality.mjs using argument arrays and inherited output, labeled sequential lint/format-check/typecheck stages, aggregated failure, actionable spawn errors and signal cleanup without network, ENV selection, credentials or service startup; satisfy T006.
+- [x] T008 [US1] Wire repository-local lint, format:check and quality package scripts in package.json and a phony lint target in Makefile invoking the runner; preserve existing typecheck and serve/test/migrate/deploy behavior.
+- [x] T009 [US1] Execute isolated positive/negative coverage checks for unused script bindings, explicit any, unsafe TypeScript operations, Hooks violations, documentation/configuration drift and a compiler-only error across src/, tests/, scripts/ and root configuration; verify excluded fixtures are untouched and record commands, diagnostic identifiers, file hashes and outcomes in specs/005-code-quality/validation.md.
 
 **Checkpoint**: US1 is demonstrable without automatic correction or whole-repository cleanup.
 

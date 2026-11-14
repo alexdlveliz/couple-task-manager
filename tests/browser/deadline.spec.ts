@@ -24,7 +24,9 @@ test("shows one saved instant in Guatemala and Madrid and permits removal", asyn
     const title = `Fecha ${String(Date.now())} ${Math.random().toString(36).slice(2)}`;
     await a.getByRole("button", { name: "Nueva tarea" }).click();
     await a.getByLabel("Título").fill(title);
-    await a.getByLabel("Responsable").selectOption({ label: "Persona B" });
+    await a
+      .getByLabel("Responsable", { exact: true })
+      .selectOption({ label: "Persona B" });
     await a.getByLabel("Fecha límite").fill("2026-11-02");
     await a.getByLabel("Hora límite").fill("09:00");
     await expect(a.getByRole("dialog")).toContainText(
@@ -57,7 +59,9 @@ test("explains DST gaps and folds in the task editor", async ({ browser }) => {
     await expect(page.getByText("Actualizado", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Nueva tarea" }).click();
     await page.getByLabel("Título").fill(`DST ${String(Date.now())}`);
-    await page.getByLabel("Responsable").selectOption({ label: "Persona A" });
+    await page
+      .getByLabel("Responsable", { exact: true })
+      .selectOption({ label: "Persona A" });
     await page.getByLabel("Fecha límite").fill("2027-03-14");
     await page.getByLabel("Hora límite").fill("02:30");
     await page.getByRole("button", { name: "Guardar", exact: true }).click();
@@ -95,7 +99,9 @@ test("requires review if the device zone changes while editing", async ({
     await expect(page.getByText("Actualizado", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Nueva tarea" }).click();
     await page.getByLabel("Título").fill(`Zona ${String(Date.now())}`);
-    await page.getByLabel("Responsable").selectOption({ label: "Persona A" });
+    await page
+      .getByLabel("Responsable", { exact: true })
+      .selectOption({ label: "Persona A" });
     await page.getByLabel("Fecha límite").fill("2026-11-02");
     await page.getByLabel("Hora límite").fill("09:00");
     const session = await context.newCDPSession(page);
@@ -148,7 +154,9 @@ test("editing an unrelated field preserves the exact original deadline instant",
     const title = `Precisión ${String(Date.now())} ${Math.random().toString(36).slice(2)}`;
     await page.getByRole("button", { name: "Nueva tarea" }).click();
     await page.getByLabel("Título").fill(title);
-    await page.getByLabel("Responsable").selectOption({ label: "Persona A" });
+    await page
+      .getByLabel("Responsable", { exact: true })
+      .selectOption({ label: "Persona A" });
     await page.getByRole("button", { name: "Guardar", exact: true }).click();
     await expect(page.getByText(title)).toBeVisible();
     await page.getByRole("button", { name: `Editar tarea: ${title}` }).click();

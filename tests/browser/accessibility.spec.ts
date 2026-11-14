@@ -57,7 +57,9 @@ test("deadline inputs can be reached and edited by keyboard", async ({
   await page.getByRole("button", { name: "Entrar" }).click();
   await page.getByRole("button", { name: "Nueva tarea" }).click();
   await page.getByLabel("Título").fill("Revisión de fecha");
-  await page.getByLabel("Responsable").selectOption({ label: "Persona A" });
+  await page
+    .getByLabel("Responsable", { exact: true })
+    .selectOption({ label: "Persona A" });
   const date = page.getByLabel("Fecha límite");
   const time = page.getByLabel("Hora límite");
   await date.focus();

@@ -12,11 +12,17 @@ async function login(context: BrowserContext, email: string, password: string) {
 }
 
 test("displays and refreshes a board served with weak ETags", async ({
-  partnerA,
+  browser,
+  browserName,
 }) => {
-  const page = await partnerA.newPage();
+  const context = await browser.newContext({ serviceWorkers: "block" });
+  const page = await context.newPage();
   await page.route("**/api/tasks", async (route) => {
-    if (route.request().headers()["if-none-match"] === '"board-r2"') {
+    // WebKit cannot fulfill a 304 through Playwright routing.
+    if (
+      browserName !== "webkit" &&
+      route.request().headers()["if-none-match"] === '"board-r2"'
+    ) {
       await route.fulfill({ status: 304, headers: { ETag: 'W/"board-r2"' } });
       return;
     }
@@ -65,19 +71,23 @@ test("both partners can create, reassign and complete the same task", async ({
   const title = `Compra ${String(Date.now())} ${Math.random().toString(36).slice(2)}`;
   await a.getByRole("button", { name: "Nueva tarea" }).click();
   await a.getByLabel("Título").fill(title);
-  await a.getByLabel("Responsable").selectOption({ label: "Persona B" });
+  await a
+    .getByLabel("Responsable", { exact: true })
+    .selectOption({ label: "Persona B" });
   await a.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(a.getByText("Cambios guardados.")).toBeVisible();
   await b.getByRole("button", { name: "Actualizar" }).click();
   await expect(b.getByText(title)).toBeVisible();
   await b.getByRole("button", { name: `Editar tarea: ${title}` }).click();
-  await b.getByLabel("Responsable").selectOption({ label: "Persona A" });
+  await b
+    .getByLabel("Responsable", { exact: true })
+    .selectOption({ label: "Persona A" });
   await b.getByLabel("Estado", { exact: true }).selectOption("completed");
   await b.getByRole("button", { name: "Guardar", exact: true }).click();
   await a.getByRole("button", { name: "Actualizar" }).click();
-  await expect(
-    a.getByRole("region", { name: /Completada/ }).getByText(title),
-  ).toBeVisible();
+  await expect(a.getByLabel(`Cambiar estado: ${title}`)).toHaveValue(
+    "completed",
+  );
 });
 
 test("preserves the draft and does not retry an uncertain save", async ({
@@ -100,7 +110,9 @@ test("preserves the draft and does not retry an uncertain save", async ({
   );
   await page.getByRole("button", { name: "Nueva tarea" }).click();
   await page.getByLabel("Título").fill("Borrador conservado");
-  await page.getByLabel("Responsable").selectOption({ label: "Persona B" });
+  await page
+    .getByLabel("Responsable", { exact: true })
+    .selectOption({ label: "Persona B" });
   let posts = 0;
   await page.route("**/api/tasks", async (route) => {
     if (route.request().method() === "POST") {
@@ -148,12 +160,14 @@ test("either partner can reassign and move a task through every state", async ({
   const title = `Estados ${String(Date.now())} ${Math.random().toString(36).slice(2)}`;
   await b.getByRole("button", { name: "Nueva tarea" }).click();
   await b.getByLabel("Título").fill(title);
-  await b.getByLabel("Responsable").selectOption({ label: "Persona A" });
+  await b
+    .getByLabel("Responsable", { exact: true })
+    .selectOption({ label: "Persona A" });
   await b.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(b.getByText("Cambios guardados.")).toBeVisible();
   await a.getByRole("button", { name: "Actualizar" }).click();
   await expect(a.getByText(title)).toBeVisible();
-  for (const [status, label] of [
+  for (const [status] of [
     ["in_progress", "En progreso"],
     ["blocked", "Bloqueada"],
     ["completed", "Completada"],
@@ -161,14 +175,83 @@ test("either partner can reassign and move a task through every state", async ({
   ] as const) {
     await a.getByRole("button", { name: `Editar tarea: ${title}` }).click();
     await a.getByLabel("Estado", { exact: true }).selectOption(status);
-    await a.getByLabel("Responsable").selectOption({ label: "Persona B" });
+    await a
+      .getByLabel("Responsable", { exact: true })
+      .selectOption({ label: "Persona B" });
     await a.getByRole("button", { name: "Guardar", exact: true }).click();
-    await expect(
-      a.getByRole("region", { name: new RegExp(label) }).getByText(title),
-    ).toBeVisible();
+    await expect(a.getByLabel(`Cambiar estado: ${title}`)).toHaveValue(status);
   }
   await b.getByRole("button", { name: "Actualizar" }).click();
+  await expect(b.getByLabel(`Cambiar estado: ${title}`)).toHaveValue("todo");
+});
+
+test("filters the list and changes status directly", async ({ partnerA }) => {
+  const page = await login(
+    partnerA,
+    "partner-a@example.test",
+    "local-demo-password-a",
+  );
+  const title = `Lista ${String(Date.now())}`;
+  await page.getByRole("button", { name: "Nueva tarea" }).click();
+  await page.getByLabel("Título").fill(title);
+  await page
+    .getByLabel("Responsable", { exact: true })
+    .selectOption({ label: "Persona A" });
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await expect(page.getByLabel(`Cambiar estado: ${title}`)).toBeEnabled();
+  await page.getByLabel(`Cambiar estado: ${title}`).selectOption("blocked");
+  await expect(page.getByLabel(`Cambiar estado: ${title}`)).toHaveValue(
+    "blocked",
+  );
+  await page.getByLabel("Filtrar por estado").selectOption("completed");
+  await expect(page.getByText(title)).toHaveCount(0);
+  await page.getByLabel("Filtrar por estado").selectOption("blocked");
+  await page
+    .getByLabel("Filtrar por responsable")
+    .selectOption({ label: "Persona A" });
+  await expect(page.getByText(title)).toBeVisible();
+});
+
+test("an uncertain direct status save keeps the authoritative value and requires refresh", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({ serviceWorkers: "block" });
+  const page = await login(
+    context,
+    "partner-a@example.test",
+    "local-demo-password-a",
+  );
+  const title = `Cambio incierto ${String(Date.now())}`;
+  await page.getByRole("button", { name: "Nueva tarea" }).click();
+  await page.getByLabel("Título").fill(title);
+  await page
+    .getByLabel("Responsable", { exact: true })
+    .selectOption({ label: "Persona A" });
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  const control = page.getByLabel(`Cambiar estado: ${title}`);
+  await expect(control).toBeEnabled();
+  await page.route("**/api/tasks/**", async (route) => {
+    if (route.request().method() === "PUT")
+      await route.fulfill({
+        status: 500,
+        json: { error: { message: "Error" } },
+      });
+    else await route.continue();
+  });
+  await page.route("**/api/tasks", async (route) => {
+    if (route.request().method() === "GET")
+      await route.fulfill({
+        status: 503,
+        json: { error: { message: "Error" } },
+      });
+    else await route.continue();
+  });
+  await control.selectOption("completed");
   await expect(
-    b.getByRole("region", { name: /Por hacer/ }).getByText(title),
+    page.getByText(
+      "No se pudo confirmar el guardado. Actualiza el tablero antes de intentarlo de nuevo.",
+    ),
   ).toBeVisible();
+  await expect(control).toHaveValue("todo");
+  await expect(control).toBeDisabled();
 });

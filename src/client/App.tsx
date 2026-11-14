@@ -258,11 +258,14 @@ export function App() {
       sync.stop();
     };
   }, [user]);
-  async function save(data: CreateTask | ReplaceTask) {
-    if (!user || !editor || busy || !online) return;
+  async function save(data: CreateTask | ReplaceTask, quickTask?: Task) {
+    if (!user || (!editor && !quickTask) || busy || !online || reconciling)
+      return;
+    const target = quickTask ?? editor?.task;
     const generation = session.current;
     setBusy(true);
     setSaved("");
+    if (quickTask) setReconciling(true);
     const api = createApi(
       user,
       (status) => {
@@ -284,11 +287,12 @@ export function App() {
       requestController.current?.signal,
     );
     try {
-      const result = editor.task
-        ? await api.replace(editor.task.id, data as ReplaceTask)
+      const result = target
+        ? await api.replace(target.id, data as ReplaceTask)
         : await api.create(data);
       if (session.current !== generation) return;
       setSaved("Cambios guardados.");
+      if (quickTask) setReconciling(true);
       setEditor(null);
       coordinator.current?.saved(result.revision);
     } catch {
@@ -346,12 +350,25 @@ export function App() {
         <p>Última sincronización: {new Date(lastSync).toLocaleString("es")}</p>
       )}
       {storageError && <p role="alert">{storageError}</p>}
+      {busy && !editor && <p role="status">Guardando…</p>}
       {saved && <p role="status">{saved}</p>}
       {board ? (
         <Board
           tasks={board.tasks}
           partners={partners}
           offline={!online}
+          busy={busy || reconciling}
+          onStatusChange={(task, status) => {
+            void save(
+              {
+                title: task.title,
+                assigneeUid: task.assigneeUid,
+                deadline: task.deadline,
+                status,
+              },
+              task,
+            );
+          }}
           onCreate={() => {
             setSaved("");
             setEditor({});
@@ -382,7 +399,7 @@ export function App() {
           onClose={() => {
             setEditor(null);
           }}
-          onSave={save}
+          onSave={(data) => save(data)}
         />
       )}
     </main>

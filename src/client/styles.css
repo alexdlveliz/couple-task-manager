@@ -1,10 +1,11 @@
 :root {
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-  color: #1c3742;
-  background: #edf4f3;
+  color: #302c29;
+  background: #f5f0e8;
   font-size: 16px;
   line-height: 1.5;
   font-synthesis: none;
+  accent-color: #735044;
 }
 * {
   box-sizing: border-box;
@@ -12,10 +13,14 @@
 body {
   margin: 0;
 }
+::selection {
+  background: #e5cbb5;
+  color: #302c29;
+}
 main {
-  max-width: 85rem;
+  max-width: 60rem;
   margin: auto;
-  padding: clamp(1rem, 4vw, 3rem);
+  padding: 1.25rem;
 }
 h1,
 h2,
@@ -24,21 +29,29 @@ h4,
 p {
   margin-top: 0;
 }
+h1,
+h2 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
 h1 {
-  font-size: clamp(1.8rem, 4vw, 2.7rem);
-  letter-spacing: -0.035em;
-  line-height: 1.12;
+  font-size: 1.7rem;
+  line-height: 1.2;
   margin-bottom: 0;
 }
 h2 {
-  font-size: 1.35rem;
+  font-size: 1.65rem;
+  line-height: 1.2;
+  margin-bottom: 0.35rem;
 }
 h3 {
-  font-size: 1.05rem;
+  font-size: 1rem;
+  margin-bottom: 0;
 }
 h4 {
   font-size: 1rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.3rem;
   overflow-wrap: anywhere;
 }
 button,
@@ -48,33 +61,44 @@ select {
   min-height: 44px;
 }
 button {
-  border: 1px solid #214e5c;
-  border-radius: 0.45rem;
-  background: #214e5c;
-  color: white;
+  border: 1px solid #69493c;
+  border-radius: 0.65rem;
+  background: #69493c;
+  color: #fff;
   padding: 0.55rem 1rem;
   cursor: pointer;
   font-weight: 700;
 }
 button:hover:not(:disabled) {
-  background: #153c49;
+  background: #4e342b;
 }
-button:disabled {
-  opacity: 0.55;
+button:active:not(:disabled) {
+  background: #39241e;
+}
+button:disabled,
+select:disabled {
+  opacity: 0.58;
   cursor: not-allowed;
 }
 button.secondary {
-  background: white;
-  color: #214e5c;
+  background: #fffdfa;
+  color: #593b30;
+}
+button.secondary:hover:not(:disabled) {
+  background: #eee2d6;
 }
 button.text-button {
   background: transparent;
   border: 0;
-  color: #214e5c;
+  color: #593b30;
   text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+button.text-button:hover:not(:disabled) {
+  background: #eee2d6;
 }
 :focus-visible {
-  outline: 3px solid #ae5a25;
+  outline: 3px solid #985b28;
   outline-offset: 3px;
 }
 .app-header,
@@ -87,80 +111,130 @@ button.text-button {
   gap: 1rem;
 }
 .app-header {
-  padding-bottom: 1.75rem;
-  border-bottom: 2px solid #bad0cd;
+  padding-bottom: 1.2rem;
+  border-bottom: 1px solid #d7c8ba;
+}
+.app-header button {
+  white-space: nowrap;
 }
 .sync-bar {
-  color: #395b61;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid #c8d9d6;
+  color: #554b43;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e0d5ca;
+  font-size: 0.9rem;
+}
+.app-shell > p {
+  color: #554b43;
+  font-size: 0.9rem;
+  margin: 0.65rem 0;
 }
 .board-header {
-  align-items: flex-end;
-  margin: 2.2rem 0 1.5rem;
-}
-.board-header h2 {
-  margin-bottom: 0.15rem;
+  align-items: end;
+  margin: 2.5rem 0 1.5rem;
 }
 .board-header p {
+  color: #62554c;
   margin-bottom: 0;
-  color: #4b6a6d;
 }
-.board {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
-  align-items: start;
-}
-.group {
-  background: #dfecea;
-  border-radius: 0.65rem;
+.filters {
+  display: flex;
+  gap: 0.75rem;
   padding: 1rem;
-  min-height: 8rem;
+  background: #eae0d4;
+  border-radius: 0.85rem;
 }
-.group h3 {
+.filters label {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 0.875rem;
+  color: #4f4139;
+}
+.filters select {
+  margin-top: 0.3rem;
+}
+.list-heading {
   display: flex;
   justify-content: space-between;
-  gap: 0.5rem;
+  align-items: baseline;
+  margin: 2rem 0 0.75rem;
 }
-.count {
-  color: #3b6265;
+.list-heading span {
+  color: #65574d;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
 }
 ul {
   list-style: none;
   margin: 0;
   padding: 0;
 }
-li + li {
-  margin-top: 0.75rem;
+.task-list {
+  background: #fffdfa;
+  border-radius: 0.85rem;
+  padding: 0 1rem;
+}
+.task-list li + li {
+  border-top: 1px solid #e8ded5;
 }
 .task {
-  background: #fff;
-  border-left: 4px solid #6b9c93;
-  border-radius: 0.3rem;
-  padding: 1rem;
-  box-shadow: 0 2px 5px #214e5c12;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+.task-content {
+  min-width: 0;
 }
 .task p {
-  color: #4b6269;
+  color: #65574d;
   font-size: 0.9rem;
   overflow-wrap: anywhere;
-  margin-bottom: 0.55rem;
+  margin: 0;
 }
-.task button {
-  width: 100%;
-  margin-top: 0.4rem;
+.task-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.task-status {
+  width: auto;
+  background-color: #f2e9de;
+  border-color: #c9b8a9;
+  color: #49392f;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+.status-in_progress {
+  background-color: #e5ede5;
+}
+.status-blocked {
+  background-color: #f7e5d9;
+}
+.status-completed {
+  background-color: #e8e8df;
+}
+.edit-button {
+  min-width: 44px;
+}
+.empty-state,
+.offline-note {
+  padding: 1rem;
+  color: #62554c;
 }
 dialog {
   width: min(32rem, calc(100% - 2rem));
   max-height: calc(100% - 2rem);
   border: 0;
-  border-radius: 0.65rem;
+  border-radius: 1rem;
   padding: 1.5rem;
   color: inherit;
+  background: #fffdfa;
 }
 dialog::backdrop {
-  background: #102d36aa;
+  background: #30251fc0;
 }
 form {
   display: grid;
@@ -174,31 +248,47 @@ label {
 input,
 select {
   width: 100%;
-  border: 1px solid #637f84;
-  border-radius: 0.35rem;
-  color: #1c3742;
-  background: white;
+  border: 1px solid #9e8a7b;
+  border-radius: 0.5rem;
+  color: #302c29;
+  background: #fffdfa;
   padding: 0.5rem;
 }
 .actions {
   justify-content: flex-end;
   margin-top: 1rem;
 }
-@media (max-width: 900px) {
-  .board {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
 @media (max-width: 560px) {
-  .board {
-    grid-template-columns: 1fr;
+  main {
+    padding: 1rem;
+  }
+  .app-header {
+    align-items: flex-start;
+  }
+  .app-header h1 {
+    font-size: 1.4rem;
   }
   .board-header {
     align-items: stretch;
     flex-direction: column;
+    margin-top: 2rem;
   }
-  .app-header {
-    align-items: flex-start;
+  .filters {
+    padding: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .filters label {
+    flex: 1 1 9rem;
+  }
+  .task {
+    align-items: stretch;
     flex-direction: column;
+    gap: 0.5rem;
+  }
+  .task-actions {
+    justify-content: space-between;
+  }
+  .task-status {
+    flex: 1;
   }
 }

@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-14T05:17:45.999Z",
+  "title": "Design System: Couple Task Manager",
+  "extensions": {
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "560px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main task action.",
+      "html": "<button class=\"ds-primary\">Nueva tarea</button>",
+      "css": ".ds-primary { font: 700 16px \"Trebuchet MS\", \"Segoe UI\", sans-serif; min-height:44px; border:1px solid #69493c; border-radius:.65rem; padding:.55rem 1rem; background:#69493c; color:white; } .ds-primary:hover { background:#4e342b; } .ds-primary:focus-visible { outline:3px solid #985b28; outline-offset:3px; }"
+    },
+    {
+      "name": "Text field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Labeled form input.",
+      "html": "<label class=\"ds-label\">Título<input class=\"ds-field\"></label>",
+      "css": ".ds-label { font:700 16px \"Trebuchet MS\", sans-serif; color:#302c29; } .ds-field { display:block; min-height:44px; border:1px solid #9e8a7b; border-radius:.5rem; background:#fffdfa; padding:.5rem; font:inherit; } .ds-field:focus-visible { outline:3px solid #985b28; outline-offset:3px; }"
+    },
+    {
+      "name": "Task row",
+      "kind": "custom",
+      "description": "A task with status and edit controls.",
+      "html": "<article class=\"ds-task\"><strong>Preparar la cena</strong><p>Persona A · Sin fecha límite</p><select aria-label=\"Estado\"><option>Por hacer</option><option>En progreso</option></select></article>",
+      "css": ".ds-task { background:#fffdfa; color:#302c29; border-radius:.85rem; padding:1rem; font:16px/1.5 \"Trebuchet MS\", sans-serif; } .ds-task p { color:#65574d; font-size:.9rem; } .ds-task select { min-height:44px; padding:.5rem; border:1px solid #c9b8a9; border-radius:.5rem; background:#f2e9de; color:#49392f; font:700 .875rem \"Trebuchet MS\", sans-serif; } .ds-task select:focus-visible { outline:3px solid #985b28; outline-offset:3px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Warm Daily Journal",
+    "overview": "A calm shared workspace with the warmth of a daily journal and the clarity of a task app. Paper-like surfaces and a quiet serif heading give the app a human character; familiar controls and compact list rows keep attention on the work.",
+    "keyCharacteristics": [
+      "Warm neutrals and restrained status colors.",
+      "Serif headings paired with readable sans-serif controls and task text.",
+      "One shared list, with clear filters and direct status selection.",
+      "Mobile-first spacing, visible focus, and honest synchronization feedback."
+    ],
+    "rules": [],
+    "dos": [
+      "Do keep actions familiar, labeled, and usable with keyboard and touch.",
+      "Do show authoritative save and synchronization feedback in Spanish.",
+      "Do allow long task titles and deadlines to wrap."
+    ],
+    "donts": [
+      "Don't rely on color alone to convey status or errors.",
+      "Don't introduce decorative paper textures that compete with the task list."
+    ]
+  }
+}

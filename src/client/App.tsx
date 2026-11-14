@@ -29,6 +29,30 @@ import type {
 type Editor = { task?: Task } | null;
 export function App() {
   const [user, setUser] = useState<User | null | undefined>();
+  const [headerDate, setHeaderDate] = useState(() => new Date());
+  useEffect(() => {
+    let timer: number;
+    const update = () => {
+      const now = new Date();
+      setHeaderDate(now);
+      const midnight = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1,
+      );
+      window.clearTimeout(timer);
+      timer = window.setTimeout(
+        update,
+        Math.min(midnight.getTime() - now.getTime() + 50, 60000),
+      );
+    };
+    update();
+    window.addEventListener("focus", update);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("focus", update);
+    };
+  }, []);
   const [board, setBoard] = useState<BoardSnapshot | null>(null);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [editor, setEditor] = useState<Editor>(null);
@@ -317,7 +341,31 @@ export function App() {
   return (
     <main className="app-shell">
       <header className="app-header">
-        <h1>Tablero compartido</h1>
+        <div>
+          <p className="header-date">
+            {new Intl.DateTimeFormat("es", { dateStyle: "full" }).format(
+              headerDate,
+            )}
+          </p>
+          <h1>Nuestro día</h1>
+          <div className="header-partners">
+            {partners.map((person) => (
+              <span key={person.uid}>
+                <span className="partner-initials" aria-hidden="true">
+                  {person.displayName
+                    .trim()
+                    .split(/\s+/)
+                    .map((part) => part[0])
+                    .slice(0, 2)
+                    .join("")
+                    .toLocaleUpperCase("es")}
+                </span>
+                {" "}
+                {person.displayName}
+              </span>
+            ))}
+          </div>
+        </div>
         <button
           className="secondary"
           type="button"
@@ -351,7 +399,16 @@ export function App() {
       )}
       {storageError && <p role="alert">{storageError}</p>}
       {busy && !editor && <p role="status">Guardando…</p>}
-      {saved && <p role="status">{saved}</p>}
+      {saved && (
+        <p
+          role="status"
+          className={
+            saved === "Cambios guardados." ? "save-confirmation" : undefined
+          }
+        >
+          {saved}
+        </p>
+      )}
       {board ? (
         <Board
           tasks={board.tasks}

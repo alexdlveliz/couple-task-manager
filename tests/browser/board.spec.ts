@@ -203,12 +203,19 @@ test("filters the list and changes status directly", async ({ partnerA }) => {
   await expect(page.getByLabel(`Cambiar estado: ${title}`)).toHaveValue(
     "blocked",
   );
-  await page.getByLabel("Filtrar por estado").selectOption("completed");
-  await expect(page.getByText(title)).toHaveCount(0);
-  await page.getByLabel("Filtrar por estado").selectOption("blocked");
   await page
-    .getByLabel("Filtrar por responsable")
-    .selectOption({ label: "Persona A" });
+    .getByRole("group", { name: "Estado" })
+    .getByRole("button", { name: "Completada" })
+    .click();
+  await expect(page.getByText(title)).toHaveCount(0);
+  await page
+    .getByRole("group", { name: "Estado" })
+    .getByRole("button", { name: "Bloqueada" })
+    .click();
+  await page
+    .getByRole("group", { name: "Responsable" })
+    .getByRole("button", { name: "Persona A" })
+    .click();
   await expect(page.getByText(title)).toBeVisible();
 });
 
@@ -254,4 +261,131 @@ test("an uncertain direct status save keeps the authoritative value and requires
   ).toBeVisible();
   await expect(control).toHaveValue("todo");
   await expect(control).toBeDisabled();
+});
+
+test("groups the board and combines and resets filters", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    serviceWorkers: "block",
+    timezoneId: "UTC",
+  });
+  const page = await context.newPage();
+  const now = new Date();
+  const date = (offset: number) =>
+    new Date(now.getTime() + offset * 86400000).toISOString();
+  const makeTask = (
+    id: string,
+    deadline: string | null,
+    status: string,
+    assigneeUid: string,
+  ) => ({
+    id,
+    title: id,
+    deadline,
+    status,
+    assigneeUid,
+    createdAt: date(-10),
+    updatedAt: date(-10),
+  });
+  const tasks = [
+    makeTask("Vencida ejemplo", date(-2), "blocked", "a"),
+    makeTask("Hoy ejemplo", date(0), "todo", "b"),
+    makeTask("Próxima ejemplo", date(2), "in_progress", "a"),
+    makeTask("Sin fecha ejemplo", null, "todo", "a"),
+    makeTask("Completada ejemplo", date(-2), "completed", "b"),
+  ];
+  await page.route("**/api/partners", (route) =>
+    route.fulfill({
+      json: {
+        partners: [
+          { uid: "a", displayName: "Persona A" },
+          { uid: "b", displayName: "Persona B" },
+        ],
+      },
+    }),
+  );
+  let revision = 1;
+  await page.route("**/api/tasks/**", async (route) => {
+    if (route.request().method() !== "PUT") return route.continue();
+    const changed = tasks[0];
+    changed.status = "completed";
+    revision++;
+    await route.fulfill({ json: { task: changed, revision } });
+  });
+  await page.route("**/api/tasks", (route) =>
+    route.fulfill({
+      json: { revision, tasks },
+      headers: { ETag: `"board-r${String(revision)}"` },
+    }),
+  );
+  await page.goto("/");
+  await page.getByLabel("Correo electrónico").fill("partner-a@example.test");
+  await page.getByLabel("Contraseña").fill("local-demo-password-a");
+  await page.getByRole("button", { name: "Entrar" }).click();
+  await expect(page.getByText("5 tareas", { exact: true })).toBeVisible();
+  await expect(page.locator(".task-groups h3")).toHaveText([
+    "Vencidas",
+    "Hoy",
+    "Próximas",
+    "Sin fecha",
+    "Completadas",
+  ]);
+  await page
+    .getByRole("group", { name: "Estado" })
+    .getByRole("button", { name: "Bloqueada" })
+    .click();
+  await page
+    .getByRole("group", { name: "Responsable" })
+    .getByRole("button", { name: "Persona B" })
+    .click();
+  await expect(
+    page.getByText("No hay tareas con estos filtros.", { exact: false }),
+  ).toBeVisible();
+  await expect(page.getByText("0 tareas", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Limpiar filtros" }).click();
+  await expect(page.getByText("5 tareas", { exact: true })).toBeVisible();
+  await page
+    .getByLabel("Cambiar estado: Vencida ejemplo")
+    .selectOption("completed");
+  await expect(
+    page
+      .getByRole("region", { name: "Completadas" })
+      .getByText("Vencida ejemplo"),
+  ).toBeVisible();
+  await expect(page.getByRole("region", { name: "Vencidas" })).toHaveCount(0);
+  await context.close();
+});
+
+test("does not steal focus after a delayed status save", async ({
+  partnerA,
+}) => {
+  const page = await login(
+    partnerA,
+    "partner-a@example.test",
+    "local-demo-password-a",
+  );
+  const title = `Foco ${String(Date.now())}`;
+  await page.getByRole("button", { name: "Nueva tarea" }).click();
+  await page.getByLabel("Título").fill(title);
+  await page
+    .getByLabel("Responsable", { exact: true })
+    .selectOption({ label: "Persona A" });
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  const status = page.getByLabel(`Cambiar estado: ${title}`);
+  await expect(status).toBeEnabled();
+  let release!: () => void;
+  const hold = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route("**/api/tasks/**", async (route) => {
+    if (route.request().method() === "PUT") await hold;
+    await route.continue();
+  });
+  await status.selectOption("completed");
+  const reset = page.getByRole("button", { name: "Limpiar filtros" });
+  await reset.focus();
+  release();
+  await expect(status).toBeEnabled();
+  await expect(reset).toBeFocused();
 });

@@ -292,3 +292,123 @@ select {
     flex: 1;
   }
 }
+
+/* Daily board */
+:root {
+  accent-color: #315b47;
+}
+button {
+  background: #315b47;
+  border-color: #315b47;
+}
+button:hover:not(:disabled) {
+  background: #234535;
+}
+.header-date,
+.header-partners {
+  margin: 0;
+  color: #62554c;
+  overflow-wrap: anywhere;
+}
+.header-date {
+  text-transform: capitalize;
+}
+.app-header h1 {
+  font-size: clamp(2rem, 5vw, 3.25rem);
+}
+.filters {
+  display: block;
+  background: #f1e8db;
+}
+.filters fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0 0 0.75rem;
+  min-width: 0;
+}
+.filters legend {
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+button.filter-chip {
+  border-radius: 2rem;
+  background: #fffdfa;
+  border: 1px solid #968578;
+  color: #302c29;
+  font-weight: 400;
+}
+button.filter-chip[aria-pressed="true"] {
+  background: #315b47;
+  border-color: #315b47;
+  color: white;
+}
+button.filter-chip:hover:not(:disabled) {
+  background: #d9e6da;
+  color: #203b2d;
+}
+.task-groups > section {
+  margin-top: 1.5rem;
+}
+.task-groups h3 {
+  margin: 0 0 0.5rem;
+  color: #315b47;
+}
+.list-heading h2 {
+  font-size: 1.35rem;
+  margin: 0;
+}
+.task-list {
+  border: 1px solid #e0d5ca;
+}
+.board-header p {
+  background: #f5d9bd;
+  border-radius: 0.65rem;
+  padding: 0.6rem 0.8rem;
+  margin-top: 0.75rem;
+}
+@media (max-width: 560px) {
+  .app-header {
+    gap: 0.5rem;
+  }
+  .app-header button {
+    white-space: normal;
+  }
+  .filters {
+    padding: 0.75rem;
+  }
+}
+.header-partners {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.5rem;
+}
+.partner-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: #f5d9bd;
+  color: #40312a;
+  font-weight: 700;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .save-confirmation {
+    animation: save-confirmed 450ms ease-out;
+  }
+  @keyframes save-confirmed {
+    from {
+      background-color: #f5d9bd;
+    }
+    to {
+      background-color: transparent;
+    }
+  }
+}

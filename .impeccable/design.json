@@ -1,12 +1,19 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-14T05:17:45.999Z",
+  "generatedAt": "2026-11-14T06:21:53.387430+00:00",
   "title": "Design System: Couple Task Manager",
   "extensions": {
     "breakpoints": [
       {
         "name": "mobile",
         "value": "560px"
+      }
+    ],
+    "motion": [
+      {
+        "name": "save-confirmed",
+        "value": "450ms ease-out",
+        "purpose": "Fade a peach save confirmation to transparent when reduced motion is not requested."
       }
     ]
   },
@@ -17,7 +24,14 @@
       "refersTo": "button-primary",
       "description": "Main task action.",
       "html": "<button class=\"ds-primary\">Nueva tarea</button>",
-      "css": ".ds-primary { font: 700 16px \"Trebuchet MS\", \"Segoe UI\", sans-serif; min-height:44px; border:1px solid #69493c; border-radius:.65rem; padding:.55rem 1rem; background:#69493c; color:white; } .ds-primary:hover { background:#4e342b; } .ds-primary:focus-visible { outline:3px solid #985b28; outline-offset:3px; }"
+      "css": ".ds-primary { font: 700 16px \"Trebuchet MS\", \"Segoe UI\", sans-serif; min-height:44px; border:1px solid #315b47; border-radius:.65rem; padding:.55rem 1rem; background:#315b47; color:white; } .ds-primary:hover { background:#234535; } .ds-primary:focus-visible { outline:3px solid #985b28; outline-offset:3px; } .ds-primary:active { background:#39241e; }"
+    },
+    {
+      "name": "Secondary button",
+      "kind": "button",
+      "description": "Secondary form action.",
+      "html": "<button class=\"ds-secondary\">Cancelar</button>",
+      "css": ".ds-secondary { font:700 16px \"Trebuchet MS\", sans-serif; min-height:44px; border:1px solid #315b47; border-radius:.65rem; padding:.55rem 1rem; background:#fffdfa; color:#593b30; } .ds-secondary:hover { background:#eee2d6; } .ds-secondary:focus-visible { outline:3px solid #985b28; outline-offset:3px; }"
     },
     {
       "name": "Text field",
@@ -32,7 +46,15 @@
       "kind": "custom",
       "description": "A task with status and edit controls.",
       "html": "<article class=\"ds-task\"><strong>Preparar la cena</strong><p>Persona A · Sin fecha límite</p><select aria-label=\"Estado\"><option>Por hacer</option><option>En progreso</option></select></article>",
-      "css": ".ds-task { background:#fffdfa; color:#302c29; border-radius:.85rem; padding:1rem; font:16px/1.5 \"Trebuchet MS\", sans-serif; } .ds-task p { color:#65574d; font-size:.9rem; } .ds-task select { min-height:44px; padding:.5rem; border:1px solid #c9b8a9; border-radius:.5rem; background:#f2e9de; color:#49392f; font:700 .875rem \"Trebuchet MS\", sans-serif; } .ds-task select:focus-visible { outline:3px solid #985b28; outline-offset:3px; }"
+      "css": ".ds-task { background:#fffdfa; color:#302c29; border:1px solid #e0d5ca; border-radius:.85rem; padding:1rem; font:16px/1.5 \"Trebuchet MS\", sans-serif; } .ds-task p { color:#65574d; font-size:.9rem; } .ds-task select { min-height:44px; padding:.5rem; border:1px solid #c9b8a9; border-radius:.5rem; background:#f2e9de; color:#49392f; font:700 .875rem \"Trebuchet MS\", sans-serif; } .ds-task select:focus-visible { outline:3px solid #985b28; outline-offset:3px; }"
+    },
+    {
+      "name": "Filter chip",
+      "kind": "chip",
+      "refersTo": "filter-chip",
+      "description": "Status or assignee filter with a pressed state.",
+      "html": "<button class=\"ds-filter-chip\" aria-pressed=\"true\">Todos</button>",
+      "css": ".ds-filter-chip { font:400 16px \"Trebuchet MS\", \"Segoe UI\", sans-serif; min-height:44px; border:1px solid #968578; border-radius:2rem; padding:.55rem 1rem; background:#fffdfa; color:#302c29; } .ds-filter-chip[aria-pressed=\"true\"] { background:#315b47; border-color:#315b47; color:white; } .ds-filter-chip:hover { background:#d9e6da; color:#203b2d; } .ds-filter-chip:focus-visible { outline:3px solid #985b28; outline-offset:3px; } .ds-filter-chip:active { background:#39241e; }"
     }
   ],
   "narrative": {
@@ -41,7 +63,7 @@
     "keyCharacteristics": [
       "Warm neutrals and restrained status colors.",
       "Serif headings paired with readable sans-serif controls and task text.",
-      "One shared list, with clear filters and direct status selection.",
+      "A date-led header and a shared list grouped by deadline, with clear filters and direct status selection.",
       "Mobile-first spacing, visible focus, and honest synchronization feedback."
     ],
     "rules": [],

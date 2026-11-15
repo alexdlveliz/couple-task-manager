@@ -8,6 +8,8 @@ async function login(context: BrowserContext, email: string, password: string) {
   await page.getByLabel("Contraseña").fill(password);
   await page.getByRole("button", { name: "Entrar" }).click();
   await expect(page.getByRole("button", { name: "Nueva tarea" })).toBeVisible();
+  const pending = page.getByRole("button", { name: /^Pendientes/ });
+  if (await pending.count()) await pending.click();
   return page;
 }
 
@@ -48,6 +50,7 @@ test("displays and refreshes a board served with weak ETags", async ({
   await page.getByLabel("Correo electrónico").fill("partner-a@example.test");
   await page.getByLabel("Contraseña").fill("local-demo-password-a");
   await page.getByRole("button", { name: "Entrar" }).click();
+  await page.getByRole("button", { name: /^Pendientes/ }).click();
   await expect(page.getByText("Tarea con ETag débil")).toBeVisible();
   await page.getByRole("button", { name: "Actualizar" }).click();
   await expect(page.getByText("Actualizado", { exact: true })).toBeVisible();
@@ -85,6 +88,7 @@ test("both partners can create, reassign and complete the same task", async ({
   await b.getByLabel("Estado", { exact: true }).selectOption("completed");
   await b.getByRole("button", { name: "Guardar", exact: true }).click();
   await a.getByRole("button", { name: "Actualizar" }).click();
+  await a.getByRole("button", { name: /^Completadas/ }).click();
   await expect(a.getByLabel(`Cambiar estado: ${title}`)).toHaveValue(
     "completed",
   );
@@ -179,6 +183,8 @@ test("either partner can reassign and move a task through every state", async ({
       .getByLabel("Responsable", { exact: true })
       .selectOption({ label: "Persona B" });
     await a.getByRole("button", { name: "Guardar", exact: true }).click();
+    const section = a.getByRole("button", { name: new RegExp(`^${({ todo: "Pendientes", in_progress: "En progreso", blocked: "Bloqueadas", completed: "Completadas" } as const)[status]}`) });
+    if (await section.getAttribute("aria-expanded") === "false") await section.click();
     await expect(a.getByLabel(`Cambiar estado: ${title}`)).toHaveValue(status);
   }
   await b.getByRole("button", { name: "Actualizar" }).click();
@@ -203,15 +209,9 @@ test("filters the list and changes status directly", async ({ partnerA }) => {
   await expect(page.getByLabel(`Cambiar estado: ${title}`)).toHaveValue(
     "blocked",
   );
-  await page
-    .getByRole("group", { name: "Estado" })
-    .getByRole("button", { name: "Completada" })
-    .click();
+  await page.getByRole("button", { name: /^Bloqueadas/ }).click();
   await expect(page.getByText(title)).toHaveCount(0);
-  await page
-    .getByRole("group", { name: "Estado" })
-    .getByRole("button", { name: "Bloqueada" })
-    .click();
+  await page.getByRole("button", { name: /^Bloqueadas/ }).click();
   await page
     .getByRole("group", { name: "Responsable" })
     .getByRole("button", { name: "Persona A" })
@@ -324,36 +324,15 @@ test("groups the board and combines and resets filters", async ({
   await page.getByLabel("Contraseña").fill("local-demo-password-a");
   await page.getByRole("button", { name: "Entrar" }).click();
   await expect(page.getByText("5 tareas", { exact: true })).toBeVisible();
-  await expect(page.locator(".task-groups h3")).toHaveText([
-    "Vencidas",
-    "Hoy",
-    "Próximas",
-    "Sin fecha",
-    "Completadas",
-  ]);
-  await page
-    .getByRole("group", { name: "Estado" })
-    .getByRole("button", { name: "Bloqueada" })
-    .click();
-  await page
-    .getByRole("group", { name: "Responsable" })
-    .getByRole("button", { name: "Persona B" })
-    .click();
-  await expect(
-    page.getByText("No hay tareas con estos filtros.", { exact: false }),
-  ).toBeVisible();
-  await expect(page.getByText("0 tareas", { exact: true })).toBeVisible();
+  await expect(page.locator(".task-groups h3")).toHaveText(["Pendientes 2", "En progreso 1", "Bloqueadas 1", "Completadas 1"]);
+  await expect(page.getByRole("button", { name: /^En progreso/ })).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByRole("button", { name: /^Pendientes/ })).toHaveAttribute("aria-expanded", "false");
+  await page.getByRole("group", { name: "Responsable" }).getByRole("button", { name: "Persona B" }).click();
+  await expect(page.getByText("2 tareas", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Limpiar filtros" }).click();
-  await expect(page.getByText("5 tareas", { exact: true })).toBeVisible();
-  await page
-    .getByLabel("Cambiar estado: Vencida ejemplo")
-    .selectOption("completed");
-  await expect(
-    page
-      .getByRole("region", { name: "Completadas" })
-      .getByText("Vencida ejemplo"),
-  ).toBeVisible();
-  await expect(page.getByRole("region", { name: "Vencidas" })).toHaveCount(0);
+  await page.getByRole("button", { name: /^Bloqueadas/ }).click();
+  await page.getByLabel("Cambiar estado: Vencida ejemplo").selectOption("completed");
+  await expect(page.getByRole("region", { name: /Completadas/ }).getByText("Vencida ejemplo")).toBeVisible();
   await context.close();
 });
 
@@ -386,6 +365,6 @@ test("does not steal focus after a delayed status save", async ({
   const reset = page.getByRole("button", { name: "Limpiar filtros" });
   await reset.focus();
   release();
-  await expect(status).toBeEnabled();
+  await expect(page.getByText("Cambios guardados.")).toBeVisible();
   await expect(reset).toBeFocused();
 });

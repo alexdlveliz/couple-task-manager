@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Temporal } from "@js-temporal/polyfill";
-import { groupTasks, summarizeTasks } from "./board-view";
+import { summarizeTasks } from "./board-view";
 import { currentZone } from "./deadline";
 import { displayDeadline } from "./deadline";
 import {
@@ -34,6 +34,9 @@ export function Board({
     zone: currentZone(),
   }));
   const pendingFocus = useRef<string | null>(null);
+  const pendingStatus = useRef<TaskStatus | null>(null);
+  const [expanded, setExpanded] = useState<TaskStatus[]>(["in_progress"]);
+  const [announcement, setAnnouncement] = useState("");
   useEffect(() => {
     let timer: number;
     const update = () => {
@@ -79,6 +82,12 @@ export function Board({
   }, []);
   useEffect(() => {
     if (!busy && pendingFocus.current) {
+      const moved = tasks.find((task) => task.id === pendingFocus.current);
+      if (moved && moved.status === pendingStatus.current && !expanded.includes(moved.status)) {
+        setExpanded((previous) => [...previous, moved.status]);
+        setAnnouncement(`Tarea movida a ${STATUS_LABELS[moved.status]}.`);
+        return;
+      }
       const control = document.querySelector(
         `[data-task-id="${CSS.escape(pendingFocus.current)}"]`,
       ) as unknown as HTMLSelectElement | null;
@@ -86,15 +95,14 @@ export function Board({
       else document.getElementById("list-heading")?.focus();
       pendingFocus.current = null;
     }
-  }, [busy, tasks]);
-  const [status, setStatus] = useState("all");
+  }, [busy, tasks, expanded]);
   const [assignee, setAssignee] = useState("all");
   const visible = tasks.filter(
     (task) =>
-      (status === "all" || task.status === status) &&
       (assignee === "all" || task.assigneeUid === assignee),
   );
-  const groups = groupTasks(visible, clock.now, clock.zone);
+  const groups = STATUSES.map((key) => ({ key, tasks: visible.filter((task) => task.status === key) }));
+  const groupLabels: Record<TaskStatus, string> = { todo: "Pendientes", in_progress: "En progreso", blocked: "Bloqueadas", completed: "Completadas" };
   const summary = summarizeTasks(tasks, clock.now, clock.zone);
   return (
     <section aria-label="Tareas compartidas" className="board-section">
@@ -110,30 +118,6 @@ export function Board({
         </button>
       </div>
       <div className="filters" aria-label="Filtros de tareas">
-        <fieldset>
-          <legend>Estado</legend>
-          <div className="filter-chips">
-            {[
-              { value: "all", label: "Todos" },
-              ...STATUSES.map((value) => ({
-                value,
-                label: STATUS_LABELS[value],
-              })),
-            ].map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                className="filter-chip"
-                aria-pressed={status === item.value}
-                onClick={() => {
-                  setStatus(item.value);
-                }}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </fieldset>
         <fieldset>
           <legend>Responsable</legend>
           <div className="filter-chips">
@@ -159,7 +143,6 @@ export function Board({
           type="button"
           className="text-button"
           onClick={() => {
-            setStatus("all");
             setAssignee("all");
           }}
         >
@@ -174,6 +157,7 @@ export function Board({
           {visible.length} {visible.length === 1 ? "tarea" : "tareas"}
         </span>
       </div>
+      <p className="sr-only" aria-live="polite">{announcement}</p>
       {tasks.length === 0 ? (
         <p className="empty-state">
           Todavía no hay tareas. Crea una para empezar a compartir el trabajo.
@@ -186,8 +170,8 @@ export function Board({
         <div className="task-groups">
           {groups.map((group) => (
             <section key={group.key} aria-labelledby={`group-${group.key}`}>
-              <h3 id={`group-${group.key}`}>{group.label}</h3>
-              <ul className="task-list">
+              <h3 id={`group-${group.key}`}><button type="button" className="group-toggle" aria-expanded={expanded.includes(group.key)} onClick={() => setExpanded((previous) => previous.includes(group.key) ? previous.filter((item) => item !== group.key) : [...previous, group.key])}>{groupLabels[group.key]} <span>{group.tasks.length}</span></button></h3>
+              {expanded.includes(group.key) && (group.tasks.length === 0 ? <p className="empty-state">No hay tareas en este estado.</p> : <ul className="task-list">
                 {group.tasks.map((task) => (
                   <li key={task.id}>
                     <article className="task">
@@ -212,6 +196,7 @@ export function Board({
                           disabled={offline || busy}
                           onChange={(event) => {
                             pendingFocus.current = task.id;
+                            pendingStatus.current = event.target.value as TaskStatus;
                             onStatusChange(
                               task,
                               event.target.value as TaskStatus,
@@ -238,7 +223,7 @@ export function Board({
                     </article>
                   </li>
                 ))}
-              </ul>
+              </ul>)}
             </section>
           ))}
         </div>

@@ -12,7 +12,7 @@ describe("shared task list", () => {
             id: "1",
             title: "Comprar pan",
             assigneeUid: "a",
-            status: "todo",
+            status: "in_progress",
             deadline: null,
             createdAt: "2026-01-01T00:00:00Z",
             updatedAt: "2026-01-01T00:00:00Z",
@@ -26,7 +26,8 @@ describe("shared task list", () => {
         onStatusChange: vi.fn(),
       }),
     );
-    expect(html).toContain("<legend>Estado</legend>");
+    expect(html).toContain('aria-expanded="false">Pendientes');
+    expect(html).toContain('aria-expanded="true">En progreso');
     expect(html).toContain("<legend>Responsable</legend>");
     expect(html).toContain('aria-label="Cambiar estado: Comprar pan"');
   });
@@ -108,7 +109,7 @@ it("renders daily summary, filter chips, and grouped tasks", () => {
       onStatusChange: vi.fn(),
     }),
   );
-  expect(html).toContain("Sin fecha</h3>");
+  expect(html).toContain('aria-expanded="false">Pendientes');
   expect(html).toContain("Limpiar filtros");
   expect(html).toContain("En progreso");
 });

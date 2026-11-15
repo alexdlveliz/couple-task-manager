@@ -7,7 +7,7 @@ info:
     and an enabled server-controlled partner UID. Both partners have equal rights.
     Every API response uses Cache-Control no-store. Error messages are Spanish.
     Unknown /api routes return JSON 404; unsupported methods return JSON 405 with Allow.
-    No registration, partner management, deletion, offline writes, notifications or scheduling.
+    No registration, partner management, offline writes, notifications or scheduling.
 servers:
   - url: /api
 security:
@@ -121,6 +121,41 @@ paths:
         default:
           $ref: '#/components/responses/GenericError'
   /tasks/{id}:
+    delete:
+      operationId: deleteTask
+      summary: Permanently delete any task
+      description: An enabled partner may delete any task. Deletion and the revision increment are atomic; rejected operations do not increment the revision. The response is not a complete board snapshot.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Deleted task and resulting board revision
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [revision]
+                properties:
+                  revision:
+                    type: integer
+                    minimum: 0
+                    maximum: 9007199254740991
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/Unavailable'
     put:
       operationId: replaceTask
       summary: Replace all editable values of any task

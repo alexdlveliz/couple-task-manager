@@ -198,5 +198,12 @@ export function createApi(
       if (!isSave(result)) return invalid();
       return result;
     },
+    async remove(id: string): Promise<{ revision: number }> {
+      const { data } = await call(`/api/tasks/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      if (!isObject(data) || !isRevision(data.revision)) return invalid();
+      return { revision: data.revision };
+    },
   };
 }

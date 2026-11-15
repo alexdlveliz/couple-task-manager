@@ -1,77 +1,236 @@
+import { useEffect, useRef, useState } from "react";
+import { Temporal } from "@js-temporal/polyfill";
+import { summarizeTasks } from "./board-view";
+import { currentZone } from "./deadline";
 import { displayDeadline } from "./deadline";
 import {
   STATUSES,
   STATUS_LABELS,
   type Partner,
   type Task,
+  type TaskStatus,
 } from "../shared/contracts";
 
 interface Props {
   tasks: Task[];
   partners: Partner[];
   offline: boolean;
+  busy: boolean;
   onCreate: () => void;
   onEdit: (task: Task) => void;
+  onStatusChange: (task: Task, status: TaskStatus) => void;
 }
-export function Board({ tasks, partners, offline, onCreate, onEdit }: Props) {
+export function Board({
+  tasks,
+  partners,
+  offline,
+  busy,
+  onCreate,
+  onEdit,
+  onStatusChange,
+}: Props) {
+  const [clock, setClock] = useState(() => ({
+    now: new Date().toISOString(),
+    zone: currentZone(),
+  }));
+  const pendingFocus = useRef<string | null>(null);
+  const pendingStatus = useRef<TaskStatus | null>(null);
+  const [expanded, setExpanded] = useState<TaskStatus[]>(["in_progress"]);
+  const [announcement, setAnnouncement] = useState("");
+  useEffect(() => {
+    let timer: number;
+    const update = () => {
+      const zone = currentZone();
+      const instant = Temporal.Now.instant();
+      setClock({ now: instant.toString(), zone });
+      const nextMidnight = instant
+        .toZonedDateTimeISO(zone)
+        .add({ days: 1 })
+        .startOfDay()
+        .toInstant();
+      window.clearTimeout(timer);
+      timer = window.setTimeout(
+        update,
+        Math.min(
+          nextMidnight.epochMilliseconds - instant.epochMilliseconds + 50,
+          60000,
+        ),
+      );
+    };
+    update();
+    window.addEventListener("focus", update);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("focus", update);
+    };
+  }, []);
+  useEffect(() => {
+    const onFocus = (event: FocusEvent) => {
+      if (!pendingFocus.current) return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        target !== document.body &&
+        target.dataset.taskId !== pendingFocus.current
+      )
+        pendingFocus.current = null;
+    };
+    document.addEventListener("focusin", onFocus);
+    return () => {
+      document.removeEventListener("focusin", onFocus);
+    };
+  }, []);
+  useEffect(() => {
+    if (!busy && pendingFocus.current) {
+      const moved = tasks.find((task) => task.id === pendingFocus.current);
+      if (moved && moved.status === pendingStatus.current && !expanded.includes(moved.status)) {
+        setExpanded((previous) => [...previous, moved.status]);
+        setAnnouncement(`Tarea movida a ${STATUS_LABELS[moved.status]}.`);
+        return;
+      }
+      const control = document.querySelector(
+        `[data-task-id="${CSS.escape(pendingFocus.current)}"]`,
+      ) as unknown as HTMLSelectElement | null;
+      if (control) control.focus();
+      else document.getElementById("list-heading")?.focus();
+      pendingFocus.current = null;
+    }
+  }, [busy, tasks, expanded]);
+  const [assignee, setAssignee] = useState("all");
+  const visible = tasks.filter(
+    (task) =>
+      (assignee === "all" || task.assigneeUid === assignee),
+  );
+  const groups = STATUSES.map((key) => ({ key, tasks: visible.filter((task) => task.status === key) }));
+  const groupLabels: Record<TaskStatus, string> = { todo: "Pendientes", in_progress: "En progreso", blocked: "Bloqueadas", completed: "Completadas" };
+  const summary = summarizeTasks(tasks, clock.now, clock.zone);
   return (
-    <section aria-label="Tareas compartidas">
+    <section aria-label="Tareas compartidas" className="board-section">
       <div className="board-header">
         <div>
-          <h2>Tareas compartidas</h2>
-          <p>Lo que hacemos, en un mismo lugar.</p>
+          <h2>Lo que compartimos</h2>
+          <p>
+            {summary.today} para hoy · {summary.inProgress} en progreso
+          </p>
         </div>
-        <button onClick={onCreate} disabled={offline}>
+        <button onClick={onCreate} disabled={offline || busy}>
           Nueva tarea
         </button>
       </div>
-      {tasks.length === 0 && <p>Todavía no hay tareas.</p>}
-      <div className="board">
-        {STATUSES.map((status) => {
-          const group = tasks.filter((task) => task.status === status);
-          return (
-            <section
-              className="group"
-              key={status}
-              aria-labelledby={`group-${status}`}
-            >
-              <h3 id={`group-${status}`}>
-                {STATUS_LABELS[status]}{" "}
-                <span className="count">{group.length}</span>
-              </h3>
-              <ul>
-                {group.map((task) => (
+      <div className="filters" aria-label="Filtros de tareas">
+        <fieldset>
+          <legend>Responsable</legend>
+          <div className="filter-chips">
+            {[
+              { uid: "all", displayName: "Todas las personas" },
+              ...partners,
+            ].map((person) => (
+              <button
+                key={person.uid}
+                type="button"
+                className="filter-chip"
+                aria-pressed={assignee === person.uid}
+                onClick={() => {
+                  setAssignee(person.uid);
+                }}
+              >
+                {person.displayName}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+        <button
+          type="button"
+          className="text-button"
+          onClick={() => {
+            setAssignee("all");
+          }}
+        >
+          Limpiar filtros
+        </button>
+      </div>
+      <div className="list-heading">
+        <h2 id="list-heading" tabIndex={-1}>
+          Lista compartida
+        </h2>
+        <span>
+          {visible.length} {visible.length === 1 ? "tarea" : "tareas"}
+        </span>
+      </div>
+      <p className="sr-only" aria-live="polite">{announcement}</p>
+      {tasks.length === 0 ? (
+        <p className="empty-state">
+          Todavía no hay tareas. Crea una para empezar a compartir el trabajo.
+        </p>
+      ) : visible.length === 0 ? (
+        <p className="empty-state">
+          No hay tareas con estos filtros. Elige otros para ver más.
+        </p>
+      ) : (
+        <div className="task-groups">
+          {groups.map((group) => (
+            <section key={group.key} aria-labelledby={`group-${group.key}`}>
+              <h3 id={`group-${group.key}`}><button type="button" className="group-toggle" aria-expanded={expanded.includes(group.key)} onClick={() => setExpanded((previous) => previous.includes(group.key) ? previous.filter((item) => item !== group.key) : [...previous, group.key])}>{groupLabels[group.key]} <span>{group.tasks.length}</span></button></h3>
+              {expanded.includes(group.key) && (group.tasks.length === 0 ? <p className="empty-state">No hay tareas en este estado.</p> : <ul className="task-list">
+                {group.tasks.map((task) => (
                   <li key={task.id}>
                     <article className="task">
-                      <h4>{task.title}</h4>
-                      <p>
-                        {partners.find(
-                          (partner) => partner.uid === task.assigneeUid,
-                        )?.displayName ?? "Persona no disponible"}
-                      </p>
-                      <p>
-                        {task.deadline
-                          ? displayDeadline(task.deadline)
-                          : "Sin fecha límite"}
-                      </p>
-                      <button
-                        className="secondary"
-                        onClick={() => {
-                          onEdit(task);
-                        }}
-                        disabled={offline}
-                        aria-label={`Editar tarea: ${task.title}`}
-                      >
-                        Editar tarea
-                      </button>
+                      <div className="task-content">
+                        <h4>{task.title}</h4>
+                        <p>
+                          {partners.find(
+                            (partner) => partner.uid === task.assigneeUid,
+                          )?.displayName ?? "Persona no disponible"}
+                          <span aria-hidden="true"> · </span>
+                          {task.deadline
+                            ? displayDeadline(task.deadline)
+                            : "Sin fecha límite"}
+                        </p>
+                      </div>
+                      <div className="task-actions">
+                        <select
+                          className={`task-status status-${task.status}`}
+                          data-task-id={task.id}
+                          aria-label={`Cambiar estado: ${task.title}`}
+                          value={task.status}
+                          disabled={offline || busy}
+                          onChange={(event) => {
+                            pendingFocus.current = task.id;
+                            pendingStatus.current = event.target.value as TaskStatus;
+                            onStatusChange(
+                              task,
+                              event.target.value as TaskStatus,
+                            );
+                          }}
+                        >
+                          {STATUSES.map((item) => (
+                            <option key={item} value={item}>
+                              {STATUS_LABELS[item]}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          className="text-button edit-button"
+                          onClick={() => {
+                            onEdit(task);
+                          }}
+                          disabled={offline || busy}
+                          aria-label={`Editar tarea: ${task.title}`}
+                        >
+                          Editar
+                        </button>
+                      </div>
                     </article>
                   </li>
                 ))}
-              </ul>
+              </ul>)}
             </section>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
+      {offline && (
+        <p className="offline-note">Necesitas conexión para guardar cambios.</p>
+      )}
     </section>
   );
 }

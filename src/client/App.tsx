@@ -29,6 +29,30 @@ import type {
 type Editor = { task?: Task } | null;
 export function App() {
   const [user, setUser] = useState<User | null | undefined>();
+  const [headerDate, setHeaderDate] = useState(() => new Date());
+  useEffect(() => {
+    let timer: number;
+    const update = () => {
+      const now = new Date();
+      setHeaderDate(now);
+      const midnight = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1,
+      );
+      window.clearTimeout(timer);
+      timer = window.setTimeout(
+        update,
+        Math.min(midnight.getTime() - now.getTime() + 50, 60000),
+      );
+    };
+    update();
+    window.addEventListener("focus", update);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("focus", update);
+    };
+  }, []);
   const [board, setBoard] = useState<BoardSnapshot | null>(null);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [editor, setEditor] = useState<Editor>(null);
@@ -258,11 +282,14 @@ export function App() {
       sync.stop();
     };
   }, [user]);
-  async function save(data: CreateTask | ReplaceTask) {
-    if (!user || !editor || busy || !online) return;
+  async function save(data: CreateTask | ReplaceTask, quickTask?: Task) {
+    if (!user || (!editor && !quickTask) || busy || !online || reconciling)
+      return;
+    const target = quickTask ?? editor?.task;
     const generation = session.current;
     setBusy(true);
     setSaved("");
+    if (quickTask) setReconciling(true);
     const api = createApi(
       user,
       (status) => {
@@ -284,11 +311,12 @@ export function App() {
       requestController.current?.signal,
     );
     try {
-      const result = editor.task
-        ? await api.replace(editor.task.id, data as ReplaceTask)
+      const result = target
+        ? await api.replace(target.id, data as ReplaceTask)
         : await api.create(data);
       if (session.current !== generation) return;
       setSaved("Cambios guardados.");
+      if (quickTask) setReconciling(true);
       setEditor(null);
       coordinator.current?.saved(result.revision);
     } catch {
@@ -313,7 +341,31 @@ export function App() {
   return (
     <main className="app-shell">
       <header className="app-header">
-        <h1>Tablero compartido</h1>
+        <div>
+          <p className="header-date">
+            {new Intl.DateTimeFormat("es", { dateStyle: "full" }).format(
+              headerDate,
+            )}
+          </p>
+          <h1>Nuestro día</h1>
+          <div className="header-partners">
+            {partners.map((person) => (
+              <span key={person.uid}>
+                <span className="partner-initials" aria-hidden="true">
+                  {person.displayName
+                    .trim()
+                    .split(/\s+/)
+                    .map((part) => part[0])
+                    .slice(0, 2)
+                    .join("")
+                    .toLocaleUpperCase("es")}
+                </span>
+                {" "}
+                {person.displayName}
+              </span>
+            ))}
+          </div>
+        </div>
         <button
           className="secondary"
           type="button"
@@ -346,12 +398,34 @@ export function App() {
         <p>Última sincronización: {new Date(lastSync).toLocaleString("es")}</p>
       )}
       {storageError && <p role="alert">{storageError}</p>}
-      {saved && <p role="status">{saved}</p>}
+      {busy && !editor && <p role="status">Guardando…</p>}
+      {saved && (
+        <p
+          role="status"
+          className={
+            saved === "Cambios guardados." ? "save-confirmation" : undefined
+          }
+        >
+          {saved}
+        </p>
+      )}
       {board ? (
         <Board
           tasks={board.tasks}
           partners={partners}
           offline={!online}
+          busy={busy || reconciling}
+          onStatusChange={(task, status) => {
+            void save(
+              {
+                title: task.title,
+                assigneeUid: task.assigneeUid,
+                deadline: task.deadline,
+                status,
+              },
+              task,
+            );
+          }}
           onCreate={() => {
             setSaved("");
             setEditor({});
@@ -382,7 +456,7 @@ export function App() {
           onClose={() => {
             setEditor(null);
           }}
-          onSave={save}
+          onSave={(data) => save(data)}
         />
       )}
     </main>

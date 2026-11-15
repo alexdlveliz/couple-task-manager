@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-14T06:21:53.387430+00:00",
+  "generatedAt": "2026-11-15T06:35:24.621793+00:00",
   "title": "Design System: Couple Task Manager",
   "extensions": {
     "breakpoints": [
@@ -15,7 +15,526 @@
         "value": "450ms ease-out",
         "purpose": "Fade a peach save confirmation to transparent when reduced motion is not requested."
       }
-    ]
+    ],
+    "colorMeta": {
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Canvas",
+        "canonical": "#f5f0e8",
+        "tonalRamp": [
+          "oklch(15% 0.004 79.8)",
+          "oklch(25% 0.007 79.8)",
+          "oklch(35% 0.010 79.8)",
+          "oklch(45% 0.012 79.8)",
+          "oklch(55% 0.012 79.8)",
+          "oklch(70% 0.012 79.8)",
+          "oklch(85% 0.006 79.8)",
+          "oklch(95% 0.002 79.8)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "canonical": "#fffdfa",
+        "tonalRamp": [
+          "oklch(15% 0.002 78.3)",
+          "oklch(25% 0.003 78.3)",
+          "oklch(35% 0.004 78.3)",
+          "oklch(45% 0.005 78.3)",
+          "oklch(55% 0.005 78.3)",
+          "oklch(70% 0.005 78.3)",
+          "oklch(85% 0.002 78.3)",
+          "oklch(95% 0.001 78.3)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#302c29",
+        "tonalRamp": [
+          "oklch(15% 0.003 59.4)",
+          "oklch(25% 0.005 59.4)",
+          "oklch(35% 0.007 59.4)",
+          "oklch(45% 0.008 59.4)",
+          "oklch(55% 0.008 59.4)",
+          "oklch(70% 0.008 59.4)",
+          "oklch(85% 0.004 59.4)",
+          "oklch(95% 0.001 59.4)"
+        ]
+      },
+      "primary": {
+        "role": "primary",
+        "displayName": "Primary",
+        "canonical": "#315b47",
+        "tonalRamp": [
+          "oklch(15% 0.022 162.0)",
+          "oklch(25% 0.036 162.0)",
+          "oklch(35% 0.051 162.0)",
+          "oklch(45% 0.058 162.0)",
+          "oklch(55% 0.058 162.0)",
+          "oklch(70% 0.058 162.0)",
+          "oklch(85% 0.029 162.0)",
+          "oklch(95% 0.010 162.0)"
+        ]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "Primary Hover",
+        "canonical": "#234535",
+        "tonalRamp": [
+          "oklch(15% 0.018 162.1)",
+          "oklch(25% 0.031 162.1)",
+          "oklch(35% 0.043 162.1)",
+          "oklch(45% 0.049 162.1)",
+          "oklch(55% 0.049 162.1)",
+          "oklch(70% 0.049 162.1)",
+          "oklch(85% 0.025 162.1)",
+          "oklch(95% 0.008 162.1)"
+        ]
+      },
+      "filter-surface": {
+        "role": "neutral",
+        "displayName": "Filter Surface",
+        "canonical": "#f1e8db",
+        "tonalRamp": [
+          "oklch(15% 0.007 77.3)",
+          "oklch(25% 0.012 77.3)",
+          "oklch(35% 0.017 77.3)",
+          "oklch(45% 0.020 77.3)",
+          "oklch(55% 0.020 77.3)",
+          "oklch(70% 0.020 77.3)",
+          "oklch(85% 0.010 77.3)",
+          "oklch(95% 0.003 77.3)"
+        ]
+      },
+      "chip-border": {
+        "role": "neutral",
+        "displayName": "Chip Border",
+        "canonical": "#968578",
+        "tonalRamp": [
+          "oklch(15% 0.011 59.7)",
+          "oklch(25% 0.018 59.7)",
+          "oklch(35% 0.025 59.7)",
+          "oklch(45% 0.028 59.7)",
+          "oklch(55% 0.028 59.7)",
+          "oklch(70% 0.028 59.7)",
+          "oklch(85% 0.014 59.7)",
+          "oklch(95% 0.005 59.7)"
+        ]
+      },
+      "chip-hover": {
+        "role": "neutral",
+        "displayName": "Chip Hover",
+        "canonical": "#d9e6da",
+        "tonalRamp": [
+          "oklch(15% 0.008 147.6)",
+          "oklch(25% 0.013 147.6)",
+          "oklch(35% 0.019 147.6)",
+          "oklch(45% 0.021 147.6)",
+          "oklch(55% 0.021 147.6)",
+          "oklch(70% 0.021 147.6)",
+          "oklch(85% 0.011 147.6)",
+          "oklch(95% 0.004 147.6)"
+        ]
+      },
+      "chip-hover-ink": {
+        "role": "neutral",
+        "displayName": "Chip Hover Ink",
+        "canonical": "#203b2d",
+        "tonalRamp": [
+          "oklch(15% 0.016 160.3)",
+          "oklch(25% 0.026 160.3)",
+          "oklch(35% 0.037 160.3)",
+          "oklch(45% 0.042 160.3)",
+          "oklch(55% 0.042 160.3)",
+          "oklch(70% 0.042 160.3)",
+          "oklch(85% 0.021 160.3)",
+          "oklch(95% 0.007 160.3)"
+        ]
+      },
+      "summary": {
+        "role": "neutral",
+        "displayName": "Summary",
+        "canonical": "#f5d9bd",
+        "tonalRamp": [
+          "oklch(15% 0.018 67.1)",
+          "oklch(25% 0.030 67.1)",
+          "oklch(35% 0.042 67.1)",
+          "oklch(45% 0.049 67.1)",
+          "oklch(55% 0.049 67.1)",
+          "oklch(70% 0.049 67.1)",
+          "oklch(85% 0.024 67.1)",
+          "oklch(95% 0.008 67.1)"
+        ]
+      },
+      "initials-ink": {
+        "role": "neutral",
+        "displayName": "Initials Ink",
+        "canonical": "#40312a",
+        "tonalRamp": [
+          "oklch(15% 0.009 46.3)",
+          "oklch(25% 0.016 46.3)",
+          "oklch(35% 0.022 46.3)",
+          "oklch(45% 0.025 46.3)",
+          "oklch(55% 0.025 46.3)",
+          "oklch(70% 0.025 46.3)",
+          "oklch(85% 0.013 46.3)",
+          "oklch(95% 0.004 46.3)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "canonical": "#62554c",
+        "tonalRamp": [
+          "oklch(15% 0.008 56.8)",
+          "oklch(25% 0.014 56.8)",
+          "oklch(35% 0.020 56.8)",
+          "oklch(45% 0.022 56.8)",
+          "oklch(55% 0.022 56.8)",
+          "oklch(70% 0.022 56.8)",
+          "oklch(85% 0.011 56.8)",
+          "oklch(95% 0.004 56.8)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Border",
+        "canonical": "#9e8a7b",
+        "tonalRamp": [
+          "oklch(15% 0.012 59.0)",
+          "oklch(25% 0.020 59.0)",
+          "oklch(35% 0.029 59.0)",
+          "oklch(45% 0.033 59.0)",
+          "oklch(55% 0.033 59.0)",
+          "oklch(70% 0.033 59.0)",
+          "oklch(85% 0.016 59.0)",
+          "oklch(95% 0.005 59.0)"
+        ]
+      },
+      "focus": {
+        "role": "neutral",
+        "displayName": "Focus",
+        "canonical": "#985b28",
+        "tonalRamp": [
+          "oklch(15% 0.039 57.5)",
+          "oklch(25% 0.065 57.5)",
+          "oklch(35% 0.090 57.5)",
+          "oklch(45% 0.103 57.5)",
+          "oklch(55% 0.103 57.5)",
+          "oklch(70% 0.103 57.5)",
+          "oklch(85% 0.052 57.5)",
+          "oklch(95% 0.017 57.5)"
+        ]
+      },
+      "status-default": {
+        "role": "neutral",
+        "displayName": "Status Default",
+        "canonical": "#f2e9de",
+        "tonalRamp": [
+          "oklch(15% 0.007 73.1)",
+          "oklch(25% 0.011 73.1)",
+          "oklch(35% 0.015 73.1)",
+          "oklch(45% 0.018 73.1)",
+          "oklch(55% 0.018 73.1)",
+          "oklch(70% 0.018 73.1)",
+          "oklch(85% 0.009 73.1)",
+          "oklch(95% 0.003 73.1)"
+        ]
+      },
+      "status-progress": {
+        "role": "neutral",
+        "displayName": "Status Progress",
+        "canonical": "#e5ede5",
+        "tonalRamp": [
+          "oklch(15% 0.005 145.5)",
+          "oklch(25% 0.009 145.5)",
+          "oklch(35% 0.012 145.5)",
+          "oklch(45% 0.014 145.5)",
+          "oklch(55% 0.014 145.5)",
+          "oklch(70% 0.014 145.5)",
+          "oklch(85% 0.007 145.5)",
+          "oklch(95% 0.002 145.5)"
+        ]
+      },
+      "status-blocked": {
+        "role": "neutral",
+        "displayName": "Status Blocked",
+        "canonical": "#f7e5d9",
+        "tonalRamp": [
+          "oklch(15% 0.010 56.1)",
+          "oklch(25% 0.016 56.1)",
+          "oklch(35% 0.022 56.1)",
+          "oklch(45% 0.025 56.1)",
+          "oklch(55% 0.025 56.1)",
+          "oklch(70% 0.025 56.1)",
+          "oklch(85% 0.013 56.1)",
+          "oklch(95% 0.004 56.1)"
+        ]
+      },
+      "status-completed": {
+        "role": "neutral",
+        "displayName": "Status Completed",
+        "canonical": "#e8e8df",
+        "tonalRamp": [
+          "oklch(15% 0.005 106.6)",
+          "oklch(25% 0.008 106.6)",
+          "oklch(35% 0.011 106.6)",
+          "oklch(45% 0.012 106.6)",
+          "oklch(55% 0.012 106.6)",
+          "oklch(70% 0.012 106.6)",
+          "oklch(85% 0.006 106.6)",
+          "oklch(95% 0.002 106.6)"
+        ]
+      },
+      "white": {
+        "role": "neutral",
+        "displayName": "White",
+        "canonical": "#fff",
+        "tonalRamp": [
+          "oklch(15% 0.000 89.9)",
+          "oklch(25% 0.000 89.9)",
+          "oklch(35% 0.000 89.9)",
+          "oklch(45% 0.000 89.9)",
+          "oklch(55% 0.000 89.9)",
+          "oklch(70% 0.000 89.9)",
+          "oklch(85% 0.000 89.9)",
+          "oklch(95% 0.000 89.9)"
+        ]
+      },
+      "accent": {
+        "role": "neutral",
+        "displayName": "Accent",
+        "canonical": "#735044",
+        "tonalRamp": [
+          "oklch(15% 0.019 39.7)",
+          "oklch(25% 0.032 39.7)",
+          "oklch(35% 0.045 39.7)",
+          "oklch(45% 0.051 39.7)",
+          "oklch(55% 0.051 39.7)",
+          "oklch(70% 0.051 39.7)",
+          "oklch(85% 0.026 39.7)",
+          "oklch(95% 0.009 39.7)"
+        ]
+      },
+      "active": {
+        "role": "neutral",
+        "displayName": "Active",
+        "canonical": "#39241e",
+        "tonalRamp": [
+          "oklch(15% 0.013 36.6)",
+          "oklch(25% 0.021 36.6)",
+          "oklch(35% 0.030 36.6)",
+          "oklch(45% 0.034 36.6)",
+          "oklch(55% 0.034 36.6)",
+          "oklch(70% 0.034 36.6)",
+          "oklch(85% 0.017 36.6)",
+          "oklch(95% 0.006 36.6)"
+        ]
+      },
+      "secondary-ink": {
+        "role": "neutral",
+        "displayName": "Secondary Ink",
+        "canonical": "#593b30",
+        "tonalRamp": [
+          "oklch(15% 0.017 40.9)",
+          "oklch(25% 0.029 40.9)",
+          "oklch(35% 0.041 40.9)",
+          "oklch(45% 0.047 40.9)",
+          "oklch(55% 0.047 40.9)",
+          "oklch(70% 0.047 40.9)",
+          "oklch(85% 0.023 40.9)",
+          "oklch(95% 0.008 40.9)"
+        ]
+      },
+      "secondary-hover": {
+        "role": "neutral",
+        "displayName": "Secondary Hover",
+        "canonical": "#eee2d6",
+        "tonalRamp": [
+          "oklch(15% 0.008 67.6)",
+          "oklch(25% 0.013 67.6)",
+          "oklch(35% 0.018 67.6)",
+          "oklch(45% 0.021 67.6)",
+          "oklch(55% 0.021 67.6)",
+          "oklch(70% 0.021 67.6)",
+          "oklch(85% 0.010 67.6)",
+          "oklch(95% 0.003 67.6)"
+        ]
+      },
+      "selection": {
+        "role": "neutral",
+        "displayName": "Selection",
+        "canonical": "#e5cbb5",
+        "tonalRamp": [
+          "oklch(15% 0.016 62.5)",
+          "oklch(25% 0.026 62.5)",
+          "oklch(35% 0.037 62.5)",
+          "oklch(45% 0.042 62.5)",
+          "oklch(55% 0.042 62.5)",
+          "oklch(70% 0.042 62.5)",
+          "oklch(85% 0.021 62.5)",
+          "oklch(95% 0.007 62.5)"
+        ]
+      },
+      "divider-strong": {
+        "role": "neutral",
+        "displayName": "Divider Strong",
+        "canonical": "#d7c8ba",
+        "tonalRamp": [
+          "oklch(15% 0.010 65.5)",
+          "oklch(25% 0.016 65.5)",
+          "oklch(35% 0.022 65.5)",
+          "oklch(45% 0.026 65.5)",
+          "oklch(55% 0.026 65.5)",
+          "oklch(70% 0.026 65.5)",
+          "oklch(85% 0.013 65.5)",
+          "oklch(95% 0.004 65.5)"
+        ]
+      },
+      "divider": {
+        "role": "neutral",
+        "displayName": "Divider",
+        "canonical": "#e0d5ca",
+        "tonalRamp": [
+          "oklch(15% 0.007 67.6)",
+          "oklch(25% 0.012 67.6)",
+          "oklch(35% 0.017 67.6)",
+          "oklch(45% 0.019 67.6)",
+          "oklch(55% 0.019 67.6)",
+          "oklch(70% 0.019 67.6)",
+          "oklch(85% 0.010 67.6)",
+          "oklch(95% 0.003 67.6)"
+        ]
+      },
+      "row-divider": {
+        "role": "neutral",
+        "displayName": "Row Divider",
+        "canonical": "#e8ded5",
+        "tonalRamp": [
+          "oklch(15% 0.006 64.7)",
+          "oklch(25% 0.010 64.7)",
+          "oklch(35% 0.014 64.7)",
+          "oklch(45% 0.016 64.7)",
+          "oklch(55% 0.016 64.7)",
+          "oklch(70% 0.016 64.7)",
+          "oklch(85% 0.008 64.7)",
+          "oklch(95% 0.003 64.7)"
+        ]
+      },
+      "sync-text": {
+        "role": "neutral",
+        "displayName": "Sync Text",
+        "canonical": "#554b43",
+        "tonalRamp": [
+          "oklch(15% 0.007 60.9)",
+          "oklch(25% 0.012 60.9)",
+          "oklch(35% 0.016 60.9)",
+          "oklch(45% 0.019 60.9)",
+          "oklch(55% 0.019 60.9)",
+          "oklch(70% 0.019 60.9)",
+          "oklch(85% 0.009 60.9)",
+          "oklch(95% 0.003 60.9)"
+        ]
+      },
+      "filter-text": {
+        "role": "neutral",
+        "displayName": "Filter Text",
+        "canonical": "#4f4139",
+        "tonalRamp": [
+          "oklch(15% 0.009 51.5)",
+          "oklch(25% 0.015 51.5)",
+          "oklch(35% 0.021 51.5)",
+          "oklch(45% 0.024 51.5)",
+          "oklch(55% 0.024 51.5)",
+          "oklch(70% 0.024 51.5)",
+          "oklch(85% 0.012 51.5)",
+          "oklch(95% 0.004 51.5)"
+        ]
+      },
+      "metadata": {
+        "role": "neutral",
+        "displayName": "Metadata",
+        "canonical": "#65574d",
+        "tonalRamp": [
+          "oklch(15% 0.009 57.6)",
+          "oklch(25% 0.015 57.6)",
+          "oklch(35% 0.021 57.6)",
+          "oklch(45% 0.024 57.6)",
+          "oklch(55% 0.024 57.6)",
+          "oklch(70% 0.024 57.6)",
+          "oklch(85% 0.012 57.6)",
+          "oklch(95% 0.004 57.6)"
+        ]
+      },
+      "status-text": {
+        "role": "neutral",
+        "displayName": "Status Text",
+        "canonical": "#49392f",
+        "tonalRamp": [
+          "oklch(15% 0.011 53.6)",
+          "oklch(25% 0.018 53.6)",
+          "oklch(35% 0.025 53.6)",
+          "oklch(45% 0.028 53.6)",
+          "oklch(55% 0.028 53.6)",
+          "oklch(70% 0.028 53.6)",
+          "oklch(85% 0.014 53.6)",
+          "oklch(95% 0.005 53.6)"
+        ]
+      },
+      "status-border": {
+        "role": "neutral",
+        "displayName": "Status Border",
+        "canonical": "#c9b8a9",
+        "tonalRamp": [
+          "oklch(15% 0.011 63.9)",
+          "oklch(25% 0.018 63.9)",
+          "oklch(35% 0.025 63.9)",
+          "oklch(45% 0.028 63.9)",
+          "oklch(55% 0.028 63.9)",
+          "oklch(70% 0.028 63.9)",
+          "oklch(85% 0.014 63.9)",
+          "oklch(95% 0.005 63.9)"
+        ]
+      },
+      "backdrop": {
+        "role": "neutral",
+        "displayName": "Backdrop",
+        "canonical": "#30251fc0",
+        "tonalRamp": [
+          "oklch(15% 0.007 50.1)",
+          "oklch(25% 0.012 50.1)",
+          "oklch(35% 0.017 50.1)",
+          "oklch(45% 0.020 50.1)",
+          "oklch(55% 0.020 50.1)",
+          "oklch(70% 0.020 50.1)",
+          "oklch(85% 0.010 50.1)",
+          "oklch(95% 0.003 50.1)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "heading": {
+        "displayName": "Heading",
+        "purpose": "Section headings."
+      },
+      "page-title": {
+        "displayName": "Page title",
+        "purpose": "Main page heading."
+      },
+      "metadata": {
+        "displayName": "Metadata",
+        "purpose": "Task details and supporting text."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Form and filter labels."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "General interface text."
+      }
+    }
   },
   "components": [
     {
@@ -55,6 +574,13 @@
       "description": "Status or assignee filter with a pressed state.",
       "html": "<button class=\"ds-filter-chip\" aria-pressed=\"true\">Todos</button>",
       "css": ".ds-filter-chip { font:400 16px \"Trebuchet MS\", \"Segoe UI\", sans-serif; min-height:44px; border:1px solid #968578; border-radius:2rem; padding:.55rem 1rem; background:#fffdfa; color:#302c29; } .ds-filter-chip[aria-pressed=\"true\"] { background:#315b47; border-color:#315b47; color:white; } .ds-filter-chip:hover { background:#d9e6da; color:#203b2d; } .ds-filter-chip:focus-visible { outline:3px solid #985b28; outline-offset:3px; } .ds-filter-chip:active { background:#39241e; }"
+    },
+    {
+      "name": "View tabs",
+      "kind": "nav",
+      "description": "Switch between task views with a visible selected state.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\" aria-label=\"Vista de tareas\"><button role=\"tab\" aria-selected=\"true\">Lista</button><button role=\"tab\" aria-selected=\"false\">Kanban</button></div>",
+      "css": ".ds-tabs { display:flex; gap:.25rem; border-bottom:1px solid #c9b8a9; font:700 16px \"Trebuchet MS\", \"Segoe UI\", sans-serif; } .ds-tabs button { min-height:44px; padding:.55rem 1rem; border:1px solid transparent; border-radius:.65rem .65rem 0 0; background:transparent; color:#593b30; font:inherit; } .ds-tabs button[aria-selected=\"true\"] { background:#fffdfa; border-color:#c9b8a9; border-bottom-color:#fffdfa; color:#315b47; } .ds-tabs button:hover { background:#234535; color:#fff; } .ds-tabs button:focus-visible { outline:3px solid #985b28; outline-offset:3px; }"
     }
   ],
   "narrative": {

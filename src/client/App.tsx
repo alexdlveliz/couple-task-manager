@@ -331,6 +331,57 @@ export function App() {
       if (session.current === generation) setBusy(false);
     }
   }
+  async function remove(task: Task) {
+    if (!user || busy || !online || reconciling) return;
+    const generation = session.current;
+    setBusy(true);
+    setSaved("");
+    const api = createApi(
+      user,
+      (status) => {
+        if (session.current === generation) {
+          session.current++;
+          coordinator.current?.stop();
+          requestController.current?.abort();
+          setBoard(null);
+          setPartners([]);
+          setEditor(null);
+          setRejection(
+            status === 403
+              ? "Esta cuenta no tiene acceso al tablero."
+              : "Tu sesión ya no es válida. Inicia sesión de nuevo.",
+          );
+          void signOut(auth);
+        }
+      },
+      requestController.current?.signal,
+    );
+    try {
+      const result = await api.remove(task.id);
+      if (session.current !== generation) return;
+      setBoard((current) =>
+        current
+          ? {
+              ...current,
+              tasks: current.tasks.filter((item) => item.id !== task.id),
+            }
+          : current,
+      );
+      setSaved("Tarea eliminada.");
+      setReconciling(true);
+      coordinator.current?.saved(result.revision);
+    } catch {
+      if (session.current === generation) {
+        setSaved(
+          "No se pudo confirmar la eliminación. Actualiza el tablero antes de intentarlo de nuevo.",
+        );
+        setReconciling(true);
+        void coordinator.current?.refresh();
+      }
+    } finally {
+      if (session.current === generation) setBusy(false);
+    }
+  }
   if (user === undefined)
     return (
       <main>
@@ -359,8 +410,7 @@ export function App() {
                     .slice(0, 2)
                     .join("")
                     .toLocaleUpperCase("es")}
-                </span>
-                {" "}
+                </span>{" "}
                 {person.displayName}
               </span>
             ))}
@@ -415,6 +465,9 @@ export function App() {
           partners={partners}
           offline={!online}
           busy={busy || reconciling}
+          onDelete={(task) => {
+            void remove(task);
+          }}
           onStatusChange={(task, status) => {
             void save(
               {

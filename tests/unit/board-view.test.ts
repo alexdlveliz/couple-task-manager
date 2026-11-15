@@ -23,6 +23,7 @@ describe("shared task list", () => {
         busy: false,
         onCreate: vi.fn(),
         onEdit: vi.fn(),
+        onDelete: vi.fn(),
         onStatusChange: vi.fn(),
       }),
     );
@@ -105,6 +106,7 @@ it("renders daily summary, filter chips, and grouped tasks", () => {
       busy: false,
       onCreate: vi.fn(),
       onEdit: vi.fn(),
+      onDelete: vi.fn(),
       onStatusChange: vi.fn(),
     }),
   );

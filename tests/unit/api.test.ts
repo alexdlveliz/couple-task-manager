@@ -2,6 +2,17 @@ import { afterEach, expect, it, vi } from "vitest";
 import type { User } from "firebase/auth";
 import { createApi } from "../../src/client/api";
 const user = { getIdToken: () => Promise.resolve("token") } as User;
+it("deletes a task and validates its revision response", async () => {
+  const fetcher = vi
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(Response.json({ revision: 3 }))
+    .mockResolvedValueOnce(Response.json({ revision: -1 }));
+  const api = createApi(user, () => {});
+  await expect(api.remove("task/id")).resolves.toEqual({ revision: 3 });
+  expect(fetcher.mock.calls[0][0]).toBe("/api/tasks/task%2Fid");
+  expect(fetcher.mock.calls[0][1]?.method).toBe("DELETE");
+  await expect(api.remove("task")).rejects.toThrow();
+});
 afterEach(() => vi.restoreAllMocks());
 it("rejects non-JSON and structurally invalid successful responses", async () => {
   const fetcher = vi

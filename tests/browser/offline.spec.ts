@@ -67,6 +67,13 @@ test("reopens a previously verified complete board offline and refreshes after r
   await expect(
     page.getByRole("button", { name: "Nueva tarea" }),
   ).toBeDisabled();
+  await page.getByRole("tab", { name: "Kanban" }).click();
+  await expect(page.getByText(title)).toBeVisible();
+  await expect(page.getByLabel(`Cambiar estado: ${title}`)).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: `Arrastrar tarea: ${title}` }),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: /^Bloqueadas/ }).click();
   await partnerA.setOffline(false);
   await expect(page.getByText("Actualizado", { exact: true })).toBeVisible();
 });

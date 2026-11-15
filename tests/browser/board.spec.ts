@@ -183,8 +183,13 @@ test("either partner can reassign and move a task through every state", async ({
       .getByLabel("Responsable", { exact: true })
       .selectOption({ label: "Persona B" });
     await a.getByRole("button", { name: "Guardar", exact: true }).click();
-    const section = a.getByRole("button", { name: new RegExp(`^${({ todo: "Pendientes", in_progress: "En progreso", blocked: "Bloqueadas", completed: "Completadas" } as const)[status]}`) });
-    if (await section.getAttribute("aria-expanded") === "false") await section.click();
+    const section = a.getByRole("button", {
+      name: new RegExp(
+        `^${({ todo: "Pendientes", in_progress: "En progreso", blocked: "Bloqueadas", completed: "Completadas" } as const)[status]}`,
+      ),
+    });
+    if ((await section.getAttribute("aria-expanded")) === "false")
+      await section.click();
     await expect(a.getByLabel(`Cambiar estado: ${title}`)).toHaveValue(status);
   }
   await b.getByRole("button", { name: "Actualizar" }).click();
@@ -324,15 +329,33 @@ test("groups the board and combines and resets filters", async ({
   await page.getByLabel("Contraseña").fill("local-demo-password-a");
   await page.getByRole("button", { name: "Entrar" }).click();
   await expect(page.getByText("5 tareas", { exact: true })).toBeVisible();
-  await expect(page.locator(".task-groups h3")).toHaveText(["Pendientes 2", "En progreso 1", "Bloqueadas 1", "Completadas 1"]);
-  await expect(page.getByRole("button", { name: /^En progreso/ })).toHaveAttribute("aria-expanded", "true");
-  await expect(page.getByRole("button", { name: /^Pendientes/ })).toHaveAttribute("aria-expanded", "false");
-  await page.getByRole("group", { name: "Responsable" }).getByRole("button", { name: "Persona B" }).click();
+  await expect(page.locator(".task-groups h3")).toHaveText([
+    "Pendientes 2",
+    "En progreso 1",
+    "Bloqueadas 1",
+    "Completadas 1",
+  ]);
+  await expect(
+    page.getByRole("button", { name: /^En progreso/ }),
+  ).toHaveAttribute("aria-expanded", "true");
+  await expect(
+    page.getByRole("button", { name: /^Pendientes/ }),
+  ).toHaveAttribute("aria-expanded", "false");
+  await page
+    .getByRole("group", { name: "Responsable" })
+    .getByRole("button", { name: "Persona B" })
+    .click();
   await expect(page.getByText("2 tareas", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Limpiar filtros" }).click();
   await page.getByRole("button", { name: /^Bloqueadas/ }).click();
-  await page.getByLabel("Cambiar estado: Vencida ejemplo").selectOption("completed");
-  await expect(page.getByRole("region", { name: /Completadas/ }).getByText("Vencida ejemplo")).toBeVisible();
+  await page
+    .getByLabel("Cambiar estado: Vencida ejemplo")
+    .selectOption("completed");
+  await expect(
+    page
+      .getByRole("region", { name: /Completadas/ })
+      .getByText("Vencida ejemplo"),
+  ).toBeVisible();
   await context.close();
 });
 
@@ -367,4 +390,94 @@ test("does not steal focus after a delayed status save", async ({
   release();
   await expect(page.getByText("Cambios guardados.")).toBeVisible();
   await expect(reset).toBeFocused();
+});
+
+test("switches views with the keyboard and preserves the responsible filter", async ({
+  partnerA,
+}) => {
+  const page = await login(
+    partnerA,
+    "partner-a@example.test",
+    "local-demo-password-a",
+  );
+  const filter = page
+    .getByRole("group", { name: "Responsable" })
+    .getByRole("button", { name: "Persona A" });
+  await filter.click();
+  const list = page.getByRole("tab", { name: "Lista" });
+  await expect(list).toHaveAttribute("aria-selected", "true");
+  await list.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("tab", { name: "Kanban" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(filter).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("tabpanel")).toBeVisible();
+  await expect(page.locator(".kanban-column")).toHaveCount(4);
+  await page.reload();
+  await expect(page.getByRole("tab", { name: "Lista" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+});
+
+test("moves a Kanban card by dragging and by its status control", async ({
+  partnerA,
+}) => {
+  const page = await login(
+    partnerA,
+    "partner-a@example.test",
+    "local-demo-password-a",
+  );
+  const title = `Kanban ${String(Date.now())}`;
+  await page.getByRole("button", { name: "Nueva tarea" }).click();
+  await page.getByLabel("Título").fill(title);
+  await page
+    .getByLabel("Responsable", { exact: true })
+    .selectOption({ label: "Persona A" });
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await page.getByRole("tab", { name: "Kanban" }).click();
+  const card = page.locator(".kanban-card").filter({ hasText: title });
+  const target = page.locator("#column-blocked");
+  await expect(
+    card.getByRole("button", { name: /Arrastrar tarea|Mover/ }),
+  ).toHaveCount(0);
+  await card.scrollIntoViewIfNeeded();
+  const from = await card.getByRole("heading", { name: title }).boundingBox();
+  let to = await target.boundingBox();
+  if (!from || !to) throw new Error("Missing drag bounds");
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  await page.mouse.down();
+  if (to.x + to.width / 2 > (page.viewportSize()?.width ?? 1280)) {
+    await page.mouse.move(
+      (page.viewportSize()?.width ?? 400) - 25,
+      from.y + from.height / 2,
+    );
+    await expect
+      .poll(async () => (await target.boundingBox())?.x ?? 9999)
+      .toBeLessThan((page.viewportSize()?.width ?? 400) - 100);
+    to = await target.boundingBox();
+    if (!to) throw new Error("Missing target bounds");
+  }
+  await page.mouse.move(to.x + to.width / 2, Math.max(10, to.y + 30), {
+    steps: 8,
+  });
+  await page.mouse.up();
+  await expect(
+    target.locator(".kanban-card").filter({ hasText: title }),
+  ).toBeVisible();
+  await expect(card.getByLabel(`Cambiar estado: ${title}`)).toHaveValue(
+    "blocked",
+  );
+  await card.getByLabel(`Cambiar estado: ${title}`).selectOption("completed");
+  await expect(
+    page
+      .locator("#column-completed")
+      .locator(".kanban-card")
+      .filter({ hasText: title }),
+  ).toBeVisible();
+  await expect(
+    page.locator('[aria-live="polite"]').filter({ hasText: "Tarea movida" }),
+  ).toContainText("Completada");
 });

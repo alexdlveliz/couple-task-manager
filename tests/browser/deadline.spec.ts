@@ -33,8 +33,10 @@ test("shows one saved instant in Guatemala and Madrid and permits removal", asyn
       "America/Guatemala (UTC−06:00)",
     );
     await a.getByRole("button", { name: "Guardar", exact: true }).click();
+    await a.getByRole("button", { name: /^Pendientes/ }).click();
     await expect(a.getByText(title)).toBeVisible();
     await b.getByRole("button", { name: "Actualizar" }).click();
+    await b.getByRole("button", { name: /^Pendientes/ }).click();
     const card = b.getByRole("article").filter({ hasText: title });
     await expect(card).toContainText("16:00");
     await expect(card).toContainText("Europe/Madrid (UTC+01:00)");
@@ -158,6 +160,7 @@ test("editing an unrelated field preserves the exact original deadline instant",
       .getByLabel("Responsable", { exact: true })
       .selectOption({ label: "Persona A" });
     await page.getByRole("button", { name: "Guardar", exact: true }).click();
+    await page.getByRole("button", { name: /^Pendientes/ }).click();
     await expect(page.getByText(title)).toBeVisible();
     await page.getByRole("button", { name: `Editar tarea: ${title}` }).click();
     await page.getByLabel("Título").fill(`${title} editada`);

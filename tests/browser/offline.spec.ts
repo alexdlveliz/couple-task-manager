@@ -16,6 +16,7 @@ test("reopens a previously verified complete board offline and refreshes after r
     .getByLabel("Responsable", { exact: true })
     .selectOption({ label: "Persona A" });
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await page.getByRole("button", { name: /^Pendientes/ }).click();
   await expect(page.getByText(title)).toBeVisible();
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
@@ -58,6 +59,7 @@ test("reopens a previously verified complete board offline and refreshes after r
   await page.close();
   page = await partnerA.newPage();
   await page.goto("http://127.0.0.1:8787");
+  await page.getByRole("button", { name: /^Pendientes/ }).click();
   await expect(page.getByText(title)).toBeVisible({ timeout: 20_000 });
   await expect(
     page.getByText("Sin conexión. Los datos pueden estar desactualizados."),
@@ -93,10 +95,12 @@ test("offline snapshot includes completed tasks and reconnect fetches the other 
   await a.getByLabel("Fecha límite").fill("2026-11-02");
   await a.getByLabel("Hora límite").fill("09:00");
   await a.getByRole("button", { name: "Guardar", exact: true }).click();
+  await a.getByRole("button", { name: /^Pendientes/ }).click();
   await expect(a.getByText(oldTitle)).toBeVisible();
   await a.getByRole("button", { name: `Editar tarea: ${oldTitle}` }).click();
   await a.getByLabel("Estado", { exact: true }).selectOption("completed");
   await a.getByRole("button", { name: "Guardar", exact: true }).click();
+  await a.getByRole("button", { name: /^Completadas/ }).click();
   await expect(a.getByLabel(`Cambiar estado: ${oldTitle}`)).toHaveValue(
     "completed",
   );
@@ -149,6 +153,8 @@ test("offline snapshot includes completed tasks and reconnect fetches the other 
     .toBe(true);
   await partnerA.setOffline(true);
   await a.reload();
+  await a.getByRole("button", { name: /^Completadas/ }).click();
+  await a.getByRole("button", { name: /^Pendientes/ }).click();
   const oldCard = a.getByRole("article").filter({ hasText: oldTitle });
   await expect(oldCard).toBeVisible({ timeout: 20_000 });
   await expect(a.getByLabel(`Cambiar estado: ${oldTitle}`)).toHaveValue(
@@ -164,6 +170,7 @@ test("offline snapshot includes completed tasks and reconnect fetches the other 
     .getByLabel("Responsable", { exact: true })
     .selectOption({ label: "Persona A" });
   await b.getByRole("button", { name: "Guardar", exact: true }).click();
+  await b.getByRole("button", { name: /^Pendientes/ }).click();
   await expect(b.getByText(newTitle)).toBeVisible();
   await partnerA.setOffline(false);
   await expect(a.getByText(newTitle)).toBeVisible({ timeout: 20_000 });

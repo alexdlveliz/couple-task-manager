@@ -1,2 +1,6 @@
 # Copy to .dev.vars.local for local development only.
 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099
+# Optional Web Push credentials; keep real values in an ignored secrets file.
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=

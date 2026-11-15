@@ -7,9 +7,9 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 Inspect task mutation callers, authentication transitions, existing tests, PWA registration and migration setup; record integration points in specs/006-task-notifications/research.md before changing functions.
-- [ ] T002 [P] Add development-only VAPID generation helper in scripts/generate-vapid.ts and usage in scripts/README.md; never persist private keys in tracked files or logs.
-- [ ] T003 Add optional notification configuration to src/worker/env.ts and example environment files, keeping board operation available when notification credentials are absent or invalid.
+- [X] T001 Inspect task mutation callers, authentication transitions, existing tests, PWA registration and migration setup; record integration points in specs/006-task-notifications/research.md before changing functions.
+- [X] T002 [P] Add development-only VAPID generation helper in scripts/generate-vapid.ts and usage in scripts/README.md; never persist private keys in tracked files or logs.
+- [X] T003 Add optional notification configuration to src/worker/env.ts and example environment files, keeping board operation available when notification credentials are absent or invalid.
 
 ## Phase 2: Foundation
 

@@ -35,3 +35,11 @@
 **Alternatives considered**: A second service worker at the same scope would conflict with the existing registration.
 
 All planning unknowns are resolved as design decisions. Runtime CPU feasibility and actual device delivery remain explicit implementation validation obligations.
+
+## Implementation integration points
+
+Task creation, replacement, and deletion are routed through `src/worker/index.ts` to `src/worker/tasks.ts`. The save path batches the guarded mutation, revision update, and result reads in D1; integration tests exercise concurrent replacement, failed guards, rollback, and unchanged saves. Deletion already exists and needs overdue-delivery cancellation. Successful unchanged replacements still increment the board revision and must not produce a notification.
+
+Authentication transitions are handled in `src/client/App.tsx`, including several direct Firebase `signOut` calls, and private snapshot cleanup is coordinated in `src/client/session-invalidation.ts`. Notification cleanup must cover those callers and cross-tab invalidation without allowing another account to reuse an old association.
+
+The local Worker entry point wraps `createWorker(true)` in `src/worker/local.ts`. `vite.config.ts` currently generates the service worker with navigation exclusions for API and authentication paths and no runtime caching. D1 migrations are versioned in `migrations/`; `0002_partner_revision.sql` is the latest existing migration. Existing task integration coverage is in `tests/integration/tasks.test.ts`.

@@ -31,12 +31,12 @@
 **Goal**: Creation/completion notify both; other covered edits notify only the other partner.
 **Independent test**: With fixture registrations and fake transport, save each change as each partner and inspect Spanish payloads and exact recipient sets, independently of overdue scheduling.
 
-- [ ] T012 [P] [US1] Add recipient and mixed-edit payload tests in tests/unit/task-notification-events.test.ts for creation, completion, other state/title/assignment/deadline edits, failed and unchanged saves.
-- [ ] T013 [P] [US1] Add atomicity/concurrency and revision regression tests in tests/integration/task-notifications.test.ts, including simultaneous replacements and failed mutation guards.
-- [ ] T014 [US1] Implement Spanish event classification and recipient-specific mixed-completion summaries in src/worker/task-notification-events.ts; actor sees completion only, other partner sees completion and additional covered changes without duplicate completion notices.
-- [ ] T015 [US1] Extend guarded persistence in src/worker/tasks.ts to capture old/new values and notification intent atomically, avoiding separate pre-reads; preserve response shapes, revision behavior and unchanged-save semantics while generating no unchanged event.
-- [ ] T016 [US1] Integrate bounded post-save dispatch via execution context in src/worker/index.ts and src/worker/local.ts; persist intent before dispatch and ensure transport rejection never changes successful save responses.
-- [ ] T017 [US1] Validate US1 fixture scenarios and record results in specs/006-task-notifications/validation.md, including offline snapshot and synchronization regression checks.
+- [X] T012 [P] [US1] Add recipient and mixed-edit payload tests in tests/unit/task-notification-events.test.ts for creation, completion, other state/title/assignment/deadline edits, failed and unchanged saves.
+- [X] T013 [P] [US1] Add atomicity/concurrency and revision regression tests in tests/integration/task-notifications.test.ts, including simultaneous replacements and failed mutation guards.
+- [X] T014 [US1] Implement Spanish event classification and recipient-specific mixed-completion summaries in src/worker/task-notification-events.ts; actor sees completion only, other partner sees completion and additional covered changes without duplicate completion notices.
+- [X] T015 [US1] Extend guarded persistence in src/worker/tasks.ts to capture old/new values and notification intent atomically, avoiding separate pre-reads; preserve response shapes, revision behavior and unchanged-save semantics while generating no unchanged event.
+- [X] T016 [US1] Integrate bounded post-save dispatch via execution context in src/worker/index.ts and src/worker/local.ts; persist intent before dispatch and ensure transport rejection never changes successful save responses.
+- [X] T017 [US1] Validate US1 fixture scenarios and record results in specs/006-task-notifications/validation.md, including offline snapshot and synchronization regression checks.
 
 ## Phase 4: US2 — Overdue tasks (P1)
 

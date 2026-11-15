@@ -1,4 +1,9 @@
 import { verifyFirebaseToken } from "./auth";
+import {
+  dispatchDeliveries,
+  type DeliveryTransport,
+} from "./notification-delivery";
+import { sendWebPush } from "./web-push";
 import { ApiFailure, errorResponse } from "./errors";
 import { authorizePartner, listPartners } from "./partners";
 import {
@@ -29,9 +34,46 @@ async function jsonBody(request: Request): Promise<unknown> {
     throw new ApiFailure(400, "INVALID_JSON", "Revisa los datos de la tarea.");
   }
 }
-export function createWorker(local = false) {
+export function createWorker(
+  local = false,
+  transportOverride?: DeliveryTransport,
+) {
   return {
-    async fetch(request: Request, env: Env): Promise<Response> {
+    async fetch(
+      request: Request,
+      env: Env,
+      context?: { waitUntil(promise: Promise<unknown>): void },
+    ): Promise<Response> {
+      const dispatch = () => {
+        if (
+          !context ||
+          !env.VAPID_PUBLIC_KEY ||
+          !env.VAPID_PRIVATE_KEY ||
+          !env.VAPID_SUBJECT
+        )
+          return;
+        const publicKey = env.VAPID_PUBLIC_KEY,
+          privateKey = env.VAPID_PRIVATE_KEY,
+          subject = env.VAPID_SUBJECT;
+        const transport: DeliveryTransport =
+          transportOverride ??
+          ((delivery) =>
+            sendWebPush({
+              ...delivery,
+              vapidPublicKey: publicKey,
+              vapidPrivateKey: privateKey,
+              subject,
+            }));
+        try {
+          context.waitUntil(
+            dispatchDeliveries(env.DB, { now: new Date(), transport }).catch(
+              () => {},
+            ),
+          );
+        } catch {
+          /* Saving must remain independent of delivery. */
+        }
+      };
       const url = new URL(request.url);
       if (url.pathname !== "/api" && !url.pathname.startsWith("/api/"))
         return env.ASSETS.fetch(request);
@@ -98,15 +140,15 @@ export function createWorker(local = false) {
             headers: { ...noStore, ETag: `"board-r${String(board.revision)}"` },
           });
         }
-        if (path === "/api/tasks")
-          return Response.json(
-            await createTask(
-              env.DB,
-              uid,
-              parseCreateTask(await jsonBody(request)),
-            ),
-            { status: 201, headers: noStore },
+        if (path === "/api/tasks") {
+          const saved = await createTask(
+            env.DB,
+            uid,
+            parseCreateTask(await jsonBody(request)),
           );
+          dispatch();
+          return Response.json(saved, { status: 201, headers: noStore });
+        }
         if (!taskMatch)
           throw new ApiFailure(
             404,
@@ -118,15 +160,14 @@ export function createWorker(local = false) {
             await deleteTask(env.DB, uid, decodeURIComponent(taskMatch[1])),
             { headers: noStore },
           );
-        return Response.json(
-          await replaceTask(
-            env.DB,
-            uid,
-            decodeURIComponent(taskMatch[1]),
-            parseReplaceTask(await jsonBody(request)),
-          ),
-          { headers: noStore },
+        const saved = await replaceTask(
+          env.DB,
+          uid,
+          decodeURIComponent(taskMatch[1]),
+          parseReplaceTask(await jsonBody(request)),
         );
+        dispatch();
+        return Response.json(saved, { headers: noStore });
       } catch (error) {
         return errorResponse(error);
       }

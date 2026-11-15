@@ -6,6 +6,7 @@ import type {
   Task,
 } from "../shared/contracts";
 import { ApiFailure } from "./errors";
+import { taskEventStatements } from "./task-notification-events";
 
 const columns =
   "id, title, assignee_uid AS assigneeUid, status, deadline, created_at AS createdAt, updated_at AS updatedAt";
@@ -113,6 +114,16 @@ async function save(
           data.assigneeUid,
         );
   const result = await db.batch([
+    ...taskEventStatements(db, {
+      id,
+      actor: uid,
+      title: data.title,
+      assigneeUid: data.assigneeUid,
+      status: creating ? "todo" : (data as ReplaceTask).status,
+      deadline: data.deadline,
+      now,
+      creating,
+    }),
     mutation,
     db.prepare(
       "UPDATE board_metadata SET revision=revision+1 WHERE id=1 AND changes()=1",
@@ -128,13 +139,13 @@ async function save(
       )
       .bind(uid, data.assigneeUid, id),
   ]);
-  if (result[0].meta.changes !== 1)
+  if (result[2].meta.changes !== 1)
     return failMutation(
-      result[3].results[0] as MutationState | undefined,
+      result[5].results[0] as MutationState | undefined,
       creating,
     );
-  const row = result[2].results[0] as (Task & { revision: number }) | undefined;
-  if (!row || result[1].meta.changes !== 1)
+  const row = result[4].results[0] as (Task & { revision: number }) | undefined;
+  if (!row || result[3].meta.changes !== 1)
     throw new ApiFailure(
       503,
       "SERVICE_UNAVAILABLE",

@@ -40,7 +40,7 @@ test("shows one saved instant in Guatemala and Madrid and permits removal", asyn
     const card = b.getByRole("article").filter({ hasText: title });
     await expect(card).toContainText("16:00");
     await expect(card).toContainText("Europe/Madrid (UTC+01:00)");
-    await card.getByRole("button").click();
+    await card.getByRole("button", { name: `Editar tarea: ${title}` }).click();
     await b.getByRole("button", { name: "Quitar fecha límite" }).click();
     await b.getByRole("button", { name: "Guardar", exact: true }).click();
     await expect(card).toContainText("Sin fecha límite");

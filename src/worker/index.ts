@@ -1,7 +1,13 @@
 import { verifyFirebaseToken } from "./auth";
 import { ApiFailure, errorResponse } from "./errors";
 import { authorizePartner, listPartners } from "./partners";
-import { createTask, readBoard, readRevision, replaceTask } from "./tasks";
+import {
+  createTask,
+  deleteTask,
+  readBoard,
+  readRevision,
+  replaceTask,
+} from "./tasks";
 import { validateEnvironment, type Env } from "./env";
 import { parseCreateTask, parseReplaceTask } from "../shared/validation";
 
@@ -58,7 +64,7 @@ export function createWorker(local = false) {
             : path === "/api/tasks"
               ? "GET, POST"
               : taskMatch
-                ? "PUT"
+                ? "PUT, DELETE"
                 : null;
         if (!allow)
           throw new ApiFailure(
@@ -106,6 +112,11 @@ export function createWorker(local = false) {
             404,
             "ROUTE_NOT_FOUND",
             "No se encontró la dirección solicitada.",
+          );
+        if (request.method === "DELETE")
+          return Response.json(
+            await deleteTask(env.DB, uid, decodeURIComponent(taskMatch[1])),
+            { headers: noStore },
           );
         return Response.json(
           await replaceTask(

@@ -19,6 +19,7 @@ interface Props {
   busy: boolean;
   onCreate: () => void;
   onEdit: (task: Task) => void;
+  onDelete: (task: Task) => void;
   onStatusChange: (task: Task, status: TaskStatus) => void;
 }
 export function Board({
@@ -28,6 +29,7 @@ export function Board({
   busy,
   onCreate,
   onEdit,
+  onDelete,
   onStatusChange,
 }: Props) {
   const [clock, setClock] = useState(() => ({
@@ -311,6 +313,25 @@ export function Board({
                                 aria-label={`Editar tarea: ${task.title}`}
                               >
                                 Editar
+                              </button>
+                              <button
+                                className="text-button"
+                                disabled={offline || busy}
+                                aria-label={`Eliminar tarea: ${task.title}`}
+                                onClick={() => {
+                                  if (
+                                    window.confirm(
+                                      `¿Eliminar «${task.title}»? Esta acción es permanente.`,
+                                    )
+                                  ) {
+                                    document
+                                      .getElementById("list-heading")
+                                      ?.focus();
+                                    onDelete(task);
+                                  }
+                                }}
+                              >
+                                Eliminar
                               </button>
                             </div>
                           </article>

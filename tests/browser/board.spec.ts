@@ -481,3 +481,38 @@ test("moves a Kanban card by dragging and by its status control", async ({
     page.locator('[aria-live="polite"]').filter({ hasText: "Tarea movida" }),
   ).toContainText("Completada");
 });
+
+test("confirms permanent deletion and synchronizes it to the other partner", async ({
+  partnerA,
+  partnerB,
+}) => {
+  const a = await login(
+    partnerA,
+    "partner-a@example.test",
+    "local-demo-password-a",
+  );
+  const b = await login(
+    partnerB,
+    "partner-b@example.test",
+    "local-demo-password-b",
+  );
+  const title = `Eliminar ${String(Date.now())} ${Math.random().toString(36).slice(2)}`;
+  await a.getByRole("button", { name: "Nueva tarea" }).click();
+  await a.getByLabel("Título").fill(title);
+  await a
+    .getByLabel("Responsable", { exact: true })
+    .selectOption({ label: "Persona A" });
+  await a.getByRole("button", { name: "Guardar", exact: true }).click();
+  await expect(a.getByText(title)).toBeVisible();
+  await b.getByRole("button", { name: "Actualizar" }).click();
+  await expect(b.getByText(title)).toBeVisible();
+  a.once("dialog", (dialog) => void dialog.dismiss());
+  await a.getByRole("button", { name: `Eliminar tarea: ${title}` }).click();
+  await expect(a.getByText(title)).toBeVisible();
+  a.once("dialog", (dialog) => void dialog.accept());
+  await a.getByRole("button", { name: `Eliminar tarea: ${title}` }).click();
+  await expect(a.getByText("Tarea eliminada.")).toBeVisible();
+  await expect(a.getByText(title)).toHaveCount(0);
+  await b.getByRole("button", { name: "Actualizar" }).click();
+  await expect(b.getByText(title)).toHaveCount(0);
+});

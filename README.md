@@ -93,3 +93,7 @@ Mantén las migraciones y `board_metadata.revision` al actualizar el servicio. C
 4. Descarta los tokens, elimina cualquier captura temporal y comprueba que los registros no contienen credenciales ni contenido de tareas. Mide CPU y filas en el entorno real antes de aceptar la capacidad de producción.
 
 La limpieza local utiliza IndexedDB y marcadores de respaldo en el almacenamiento local o una cookie. Si todos estos mecanismos fallan al mismo tiempo durante el cierre de sesión, no se puede conservar una señal de limpieza pendiente después de cerrar todas las pestañas; se ha elegido mantener la reapertura sin conexión y aceptar ese caso excepcional. Revisa [validation.md](specs/001-shared-task-board/validation.md) antes de considerar completa la garantía de privacidad sin conexión.
+
+## Eliminación de tareas
+
+Cualquiera de las dos personas puede eliminar permanentemente una tarea tras confirmarlo. Se necesita conexión. Un dispositivo desconectado puede mostrar su copia anterior hasta volver a sincronizarse.

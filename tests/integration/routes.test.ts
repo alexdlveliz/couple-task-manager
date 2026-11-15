@@ -52,10 +52,11 @@ describe("API routes", () => {
       local,
     );
     expect(created.status).toBe(201);
-    expect(
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- The project typecheck treats Response.json as unknown in this fixture.
-      ((await created.json()) as { task: { title: string } }).task.title,
-    ).toBe("Uno");
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- Response.json is unknown under typecheck.
+    const createdBody = (await created.json()) as {
+      task: { id: string; title: string };
+    };
+    expect(createdBody.task.title).toBe("Uno");
     const snapshot = await worker.fetch(req("/api/tasks"), local);
     expect(snapshot.status).toBe(200);
     expect(snapshot.headers.get("ETag")).toBe('"board-r1"');
@@ -85,6 +86,23 @@ describe("API routes", () => {
       ).status,
     ).toBe(304);
     expect(statements.some((query) => /FROM tasks/i.test(query))).toBe(false);
+    const deleted = await worker.fetch(
+      req(`/api/tasks/${createdBody.task.id}`, { method: "DELETE" }),
+      local,
+    );
+    expect(deleted.status).toBe(200);
+    expect(await deleted.json()).toEqual({ revision: 2 });
+    expect(await (await worker.fetch(req("/api/tasks"), local)).json()).toEqual(
+      { revision: 2, tasks: [] },
+    );
+    expect(
+      (
+        await worker.fetch(
+          req(`/api/tasks/${createdBody.task.id}`, { method: "DELETE" }),
+          local,
+        )
+      ).status,
+    ).toBe(404);
     expect(
       (await worker.fetch(req("/api/tasks", { method: "DELETE" }), local))
         .status,

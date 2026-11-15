@@ -158,3 +158,50 @@ export function replaceTask(
 ): Promise<SaveResult> {
   return save(db, uid, data, id, false);
 }
+export async function deleteTask(
+  db: D1Database,
+  uid: string,
+  id: string,
+): Promise<{ revision: number }> {
+  const result = await db.batch([
+    db
+      .prepare(
+        `DELETE FROM tasks WHERE id=? AND EXISTS (SELECT 1 FROM partners WHERE uid=? AND enabled=1) AND (SELECT count(*) FROM partners)=2 AND EXISTS (SELECT 1 FROM board_metadata WHERE id=1 AND revision < ${String(maxRevision)})`,
+      )
+      .bind(id, uid),
+    db.prepare(
+      "UPDATE board_metadata SET revision=revision+1 WHERE id=1 AND changes()=1",
+    ),
+    db
+      .prepare(
+        "SELECT (SELECT COUNT(*) FROM partners) AS partnerCount, EXISTS(SELECT 1 FROM partners WHERE uid=? AND enabled=1) AS callerEnabled, EXISTS(SELECT 1 FROM tasks WHERE id=?) AS taskExists, (SELECT revision FROM board_metadata WHERE id=1) AS revision",
+      )
+      .bind(uid, id),
+  ]);
+  const state = result[2].results[0] as
+    | {
+        partnerCount: number;
+        callerEnabled: number;
+        taskExists: number;
+        revision: number;
+      }
+    | undefined;
+  if (result[0].meta.changes !== 1) {
+    if (state?.partnerCount === 2 && state.callerEnabled && !state.taskExists)
+      throw new ApiFailure(404, "TASK_NOT_FOUND", "No se encontró la tarea.");
+    if (state?.partnerCount === 2 && !state.callerEnabled)
+      throw new ApiFailure(
+        403,
+        "PARTNER_FORBIDDEN",
+        "Esta cuenta no tiene acceso al tablero.",
+      );
+    throw new ApiFailure(
+      503,
+      "SERVICE_UNAVAILABLE",
+      "El servicio no está disponible. Inténtalo de nuevo.",
+    );
+  }
+  if (result[1].meta.changes !== 1 || !state)
+    throw new Error("Deletion revision unavailable");
+  return { revision: state.revision };
+}

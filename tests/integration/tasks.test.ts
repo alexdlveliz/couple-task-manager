@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   createTask,
+  deleteTask,
   replaceTask,
   readBoard,
   readRevision,
@@ -13,6 +14,45 @@ beforeEach(async () => {
     env.DB.prepare("DELETE FROM partners"),
     env.DB.prepare("UPDATE board_metadata SET revision=0 WHERE id=1"),
   ]);
+});
+
+it("deletes for either partner without advancing revision for rejected attempts", async () => {
+  await env.DB.prepare(
+    "INSERT INTO partners VALUES (1,'a','Ana',1),(2,'b','Bea',1)",
+  ).run();
+  const first = await createTask(env.DB, "a", {
+    title: "Uno",
+    assigneeUid: "a",
+    deadline: null,
+  });
+  await expect(
+    deleteTask(env.DB, "outsider", first.task.id),
+  ).rejects.toMatchObject({ status: 403 });
+  expect(await deleteTask(env.DB, "b", first.task.id)).toEqual({ revision: 2 });
+  await expect(deleteTask(env.DB, "a", first.task.id)).rejects.toMatchObject({
+    status: 404,
+  });
+  const second = await createTask(env.DB, "b", {
+    title: "Dos",
+    assigneeUid: "b",
+    deadline: null,
+  });
+  expect(await deleteTask(env.DB, "a", second.task.id)).toEqual({
+    revision: 4,
+  });
+  expect(await readBoard(env.DB)).toEqual({ revision: 4, tasks: [] });
+  const third = await createTask(env.DB, "a", {
+    title: "Tres",
+    assigneeUid: "a",
+    deadline: null,
+  });
+  await env.DB.prepare(
+    "UPDATE board_metadata SET revision=9007199254740991 WHERE id=1",
+  ).run();
+  await expect(deleteTask(env.DB, "a", third.task.id)).rejects.toMatchObject({
+    status: 503,
+  });
+  expect((await readBoard(env.DB)).tasks).toEqual([third.task]);
 });
 
 describe("atomic board saves", () => {
@@ -249,4 +289,28 @@ it("returns all statuses ordered by creation time and ID", async () => {
     "b",
     "z",
   ]);
+});
+
+it("rolls back deletion when a batch statement fails", async () => {
+  await env.DB.prepare(
+    "INSERT INTO partners VALUES (1,'a','Ana',1),(2,'b','Bea',1)",
+  ).run();
+  const created = await createTask(env.DB, "a", {
+    title: "Conservar",
+    assigneeUid: "a",
+    deadline: null,
+  });
+  const failing = {
+    prepare: env.DB.prepare.bind(env.DB),
+    batch: (statements: D1PreparedStatement[]) =>
+      env.DB.batch([
+        ...statements,
+        env.DB.prepare("SELECT * FROM nonexistent_failure_table"),
+      ]),
+  } as unknown as D1Database;
+  await expect(deleteTask(failing, "a", created.task.id)).rejects.toThrow();
+  expect(await readBoard(env.DB)).toEqual({
+    revision: 1,
+    tasks: [created.task],
+  });
 });

@@ -284,7 +284,7 @@ export async function sendWebPush(input: {
         TTL: "86400",
       },
       body,
-      redirect: "error",
+      redirect: "manual",
       signal: AbortSignal.timeout(10000),
     });
     return {

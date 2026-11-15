@@ -83,7 +83,7 @@ it("disables redirects and classifies redirected responses", async () => {
     fetch: fetchMock,
   });
   expect(fetchMock).toHaveBeenCalledOnce();
-  expect(fetchMock.mock.calls[0][1]?.redirect).toBe("error");
+  expect(fetchMock.mock.calls[0][1]?.redirect).toBe("manual");
   expect(result.outcome).toBe("permanent_failure");
 });
 

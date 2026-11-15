@@ -61,7 +61,7 @@ Each partner can enable notifications on supported devices and understand permis
 
 - A notification failure or lack of permission never reverses or blocks a successful task save.
 - Notifications already dispatched cannot be recalled when a task is completed or its deadline changes.
-- Moving a deadline into the future starts a new cycle; unrelated edits and reopening do not reset a cycle. Removing a deadline cancels future eligibility for it.
+- Changing a deadline starts a new cycle, including when the new deadline is already past; unrelated edits and reopening do not reset a cycle. Removing a deadline cancels future eligibility, and adding one again starts a new cycle.
 - If a notification service is unavailable at the deadline, eligible events are processed when service resumes; delivery and exact arrival are not guaranteed.
 - Device permission and registration are device-specific; stale or invalid registrations must not prevent delivery attempts to other devices.
 - Notification content may appear on lock screens; only the two authorized partners may manage registrations and access task data.
@@ -75,7 +75,7 @@ Each partner can enable notifications on supported devices and understand permis
 - **FR-003**: Successfully changing a title, assignee, deadline, or state other than completion MUST generate a Spanish notification identifying the task and change addressed only to the partner who did not make the change. A save that includes completion and other covered changes MUST satisfy both recipient rules without duplicate completion notices.
 - **FR-004**: Failed, rejected, and unchanged saves MUST NOT generate successful-change notifications. Notification failures MUST NOT change saved tasks or prevent normal board use.
 - **FR-005**: Every incomplete task with a deadline MUST generate one overdue event addressed to each partner when its deadline arrives, without requiring an optional reminder. Tasks without a deadline or complete at eligibility processing MUST NOT generate an overdue event.
-- **FR-006**: The product MUST generate at most one overdue event per partner per task deadline cycle, including on repeated processing and reopening after a prior event. Moving a deadline to a future instant MUST begin a new cycle; other edits and reopening MUST NOT reset it.
+- **FR-006**: The product MUST generate at most one overdue event per partner per task deadline cycle, including on repeated processing and reopening after a prior event. Changing a deadline MUST begin a new cycle, including when the replacement is already past; removing and later adding a deadline MUST begin a new cycle. Other edits and reopening MUST NOT reset it.
 - **FR-007**: Already-past deadlines and tasks reopened after their deadline MUST be evaluated on the next eligibility check, subject to the per-cycle limit. Removing a deadline MUST stop future overdue eligibility for it.
 - **FR-008**: Each partner MUST be able to enable notifications on each supported device, review its status, and receive guidance in Spanish for unsupported, denied, and known unavailable states, including iPhone Home Screen installation where required.
 - **FR-009**: Notifications addressed to a partner MUST be submitted to that partner's currently registered eligible devices. Device failures MUST NOT prevent attempts to other eligible devices.

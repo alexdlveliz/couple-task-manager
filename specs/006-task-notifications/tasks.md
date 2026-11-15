@@ -43,12 +43,12 @@
 **Goal**: Every incomplete deadline task yields one logical overdue event per partner per cycle.
 **Independent test**: Controlled-clock fixtures produce exact eligible events with no optional reminders and no dependency on change-event generation.
 
-- [ ] T018 [P] [US2] Add deadline-cycle transition tests in tests/unit/deadline-cycle.test.ts for first deadline, changed future deadline, removal, unrelated edits, completion and reopening.
-- [ ] T019 [P] [US2] Add scheduler integration tests in tests/integration/overdue-notifications.test.ts for past deadlines, completed/no-deadline tasks, concurrent/repeated runs, rescheduling, reopening, deletion, outage recovery and stale pending cancellation.
-- [ ] T020 [US2] Implement cycle management in src/worker/deadline-cycle.ts and integrate it atomically into src/worker/tasks.ts; preserve cycles on unrelated edits/reopening and cancel pending overdue deliveries after completion, deletion or deadline replacement.
-- [ ] T021 [US2] Implement indexed, bounded overdue processing in src/worker/notification-scheduler.ts with guarded current-state eligibility and unique per-partner cycle records; process already-past deadlines on the next check and retain deduplication through cleanup.
-- [ ] T022 [US2] Add scheduled handler in src/worker/index.ts and minute cron configuration in wrangler.jsonc for applicable environments; run overdue generation, shared retry dispatch and bounded maintenance with injectable clocks for tests.
-- [ ] T023 [US2] Record controlled timing and backlog checks in specs/006-task-notifications/validation.md, proving approximately one-minute submission under the tested normal load and distinguishing event generation from device receipt.
+- [X] T018 [P] [US2] Add deadline-cycle transition tests in tests/unit/deadline-cycle.test.ts for first deadline, changed future deadline, removal, unrelated edits, completion and reopening.
+- [X] T019 [P] [US2] Add scheduler integration tests in tests/integration/overdue-notifications.test.ts for past deadlines, completed/no-deadline tasks, concurrent/repeated runs, rescheduling, reopening, deletion, outage recovery and stale pending cancellation.
+- [X] T020 [US2] Implement cycle management in src/worker/deadline-cycle.ts and integrate it atomically into src/worker/tasks.ts; preserve cycles on unrelated edits/reopening and cancel pending overdue deliveries after completion, deletion or deadline replacement.
+- [X] T021 [US2] Implement indexed, bounded overdue processing in src/worker/notification-scheduler.ts with guarded current-state eligibility and unique per-partner cycle records; process already-past deadlines on the next check and retain deduplication through cleanup.
+- [X] T022 [US2] Add scheduled handler in src/worker/index.ts and minute cron configuration in wrangler.jsonc for applicable environments; run overdue generation, shared retry dispatch and bounded maintenance with injectable clocks for tests.
+- [X] T023 [US2] Record controlled timing and backlog checks in specs/006-task-notifications/validation.md, proving approximately one-minute submission under the tested normal load and distinguishing event generation from device receipt.
 
 ## Phase 5: US3 — Enablement and availability (P2)
 

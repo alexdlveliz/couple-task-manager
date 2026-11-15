@@ -4,6 +4,7 @@
   "main": "src/worker/index.ts",
   "compatibility_date": "2026-10-01",
   "workers_dev": true,
+  "triggers": { "crons": ["* * * * *"] },
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application",
@@ -11,6 +12,7 @@
   },
   "env": {
     "local": {
+      "triggers": { "crons": ["* * * * *"] },
       "main": "src/worker/local.ts",
       "d1_databases": [
         {
@@ -27,6 +29,7 @@
       },
     },
     "dev": {
+      "triggers": { "crons": ["* * * * *"] },
       "d1_databases": [
         {
           "binding": "DB",

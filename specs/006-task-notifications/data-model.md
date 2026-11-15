@@ -1,7 +1,7 @@
 # Data Model
 
 - **Device registration**: opaque ID, partner UID, HTTPS push endpoint (unique), p256dh public key, auth secret, optional expiration, creation/update timestamps, active state and last delivery outcome. Validate key encodings and lengths; never expose another partner's subscription. Endpoint ownership cannot silently transfer between accounts.
-- **Task deadline metadata**: task ID, cycle ID, deadline instant. Create a cycle with the first deadline; a changed future deadline starts a new cycle. Removing a deadline disables eligibility; unrelated edits and reopening preserve the cycle. Deleting a task cancels pending overdue work without adding deletion notifications.
+- **Task deadline metadata**: task ID, cycle ID, deadline instant. Create a cycle with the first deadline; any changed deadline starts a new cycle. Removing a deadline disables eligibility; adding one again starts a new cycle; unrelated edits and reopening preserve the cycle. Deleting a task cancels pending overdue work without adding deletion notifications.
 - **Notification event**: ID, task ID, event type, saved revision, recipient UID, cycle ID when overdue, changed fields, minimal Spanish display payload and created time. Unique `(task, revision, type, recipient)` for mutations; unique `(task, cycle, overdue, recipient)` for overdue. Mixed completion saves include other field changes only in the other partner's payload.
 - **Device delivery**: event ID, registration ID, state, attempt count, next-attempt time, lease expiry, last sanitized error class, accepted time. Unique event/registration pair. States: pending → leased → accepted; transient failure → pending; permanent invalid endpoint → abandoned and registration disabled. Expired leases become retryable.
 

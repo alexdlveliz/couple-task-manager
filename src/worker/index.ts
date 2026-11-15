@@ -1,3 +1,5 @@
+import { processOverdue } from "./notification-scheduler";
+import { cleanupNotifications } from "./notification-maintenance";
 import { verifyFirebaseToken } from "./auth";
 import {
   dispatchDeliveries,
@@ -39,6 +41,29 @@ export function createWorker(
   transportOverride?: DeliveryTransport,
 ) {
   return {
+    async scheduled(
+      controller: { scheduledTime: number },
+      env: Env,
+    ): Promise<void> {
+      const now = new Date(controller.scheduledTime);
+      await processOverdue(env.DB, now);
+      if (env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY && env.VAPID_SUBJECT) {
+        const publicKey = env.VAPID_PUBLIC_KEY,
+          privateKey = env.VAPID_PRIVATE_KEY,
+          subject = env.VAPID_SUBJECT;
+        const transport: DeliveryTransport =
+          transportOverride ??
+          ((delivery) =>
+            sendWebPush({
+              ...delivery,
+              vapidPublicKey: publicKey,
+              vapidPrivateKey: privateKey,
+              subject,
+            }));
+        await dispatchDeliveries(env.DB, { now, transport });
+      }
+      await cleanupNotifications(env.DB, now);
+    },
     async fetch(
       request: Request,
       env: Env,

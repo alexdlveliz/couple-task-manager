@@ -117,7 +117,8 @@ export function createApi(
       ]);
       if (response.status === 401 || response.status === 403)
         onRejected(response.status);
-      if (response.status === 304) return { data: null, response };
+      if (response.status === 304 || response.status === 204)
+        return { data: null, response };
       let body: unknown;
       try {
         body = await Promise.race([response.json(), timeout, cancelled]);
@@ -152,6 +153,56 @@ export function createApi(
     }
   }
   return {
+    async notificationConfig() {
+      const { data } = await call("/api/notifications/config");
+      if (
+        !isObject(data) ||
+        typeof data.available !== "boolean" ||
+        !(data.publicKey === null || typeof data.publicKey === "string") ||
+        !(data.problem === null || typeof data.problem === "string")
+      )
+        return invalid();
+      return {
+        available: data.available,
+        publicKey: data.publicKey,
+        problem: data.problem,
+      };
+    },
+    async registerNotification(subscription: PushSubscriptionJSON) {
+      const { data } = await call("/api/notifications/subscriptions", {
+        method: "POST",
+        body: JSON.stringify(subscription),
+      });
+      if (
+        !isObject(data) ||
+        typeof data.id !== "string" ||
+        data.active !== true
+      )
+        return invalid();
+      return { id: data.id };
+    },
+    async notificationStatus(id: string) {
+      const { data } = await call(
+        `/api/notifications/subscriptions/${encodeURIComponent(id)}`,
+      );
+      if (
+        !isObject(data) ||
+        typeof data.id !== "string" ||
+        typeof data.active !== "boolean" ||
+        !(data.lastOutcome === null || typeof data.lastOutcome === "string")
+      )
+        return invalid();
+      return {
+        id: data.id,
+        active: data.active,
+        lastOutcome: data.lastOutcome,
+      };
+    },
+    async removeNotification(id: string) {
+      await call(`/api/notifications/subscriptions/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+    },
     async partners(): Promise<Partner[]> {
       const { data } = await call("/api/partners");
       if (!isPartners(data)) return invalid();

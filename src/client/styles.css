@@ -541,3 +541,18 @@ button.filter-chip:hover:not(:disabled) {
 .kanban-columns.is-dragging {
   scroll-snap-type: none;
 }
+
+.notification-settings {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border: 1px solid var(--border, #9e8a7b);
+  border-radius: 0.75rem;
+  background: var(--surface, #fffdfa);
+}
+.notification-settings h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.2rem;
+}
+.notification-settings p {
+  margin: 0.5rem 0;
+}

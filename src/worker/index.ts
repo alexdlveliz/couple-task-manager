@@ -1,3 +1,9 @@
+import {
+  notificationConfig,
+  saveSubscription,
+  subscriptionStatus,
+  removeSubscription,
+} from "./notification-subscriptions";
 import { processOverdue } from "./notification-scheduler";
 import { cleanupNotifications } from "./notification-maintenance";
 import { verifyFirebaseToken } from "./auth";
@@ -19,7 +25,7 @@ import { validateEnvironment, type Env } from "./env";
 import { parseCreateTask, parseReplaceTask } from "../shared/validation";
 
 const noStore = { "Cache-Control": "no-store" };
-async function jsonBody(request: Request): Promise<unknown> {
+async function jsonBody(request: Request, limit?: number): Promise<unknown> {
   if (
     !/^application\/json(?:\s*;|\s*$)/i.test(
       request.headers.get("content-type") ?? "",
@@ -31,8 +37,37 @@ async function jsonBody(request: Request): Promise<unknown> {
       "Envía los datos en formato JSON.",
     );
   try {
+    if (limit !== undefined) {
+      const reader = request.body?.getReader();
+      const chunks: Uint8Array[] = [];
+      let size = 0;
+      if (reader) {
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          size += value.length;
+          if (size > limit) {
+            await reader.cancel();
+            throw new ApiFailure(
+              413,
+              "BODY_TOO_LARGE",
+              "Los datos son demasiado grandes.",
+            );
+          }
+          chunks.push(value);
+        }
+      }
+      const bytes = new Uint8Array(size);
+      let offset = 0;
+      for (const chunk of chunks) {
+        bytes.set(chunk, offset);
+        offset += chunk.length;
+      }
+      return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
+    }
     return await request.json();
-  } catch {
+  } catch (error) {
+    if (error instanceof ApiFailure) throw error;
     throw new ApiFailure(400, "INVALID_JSON", "Revisa los datos de la tarea.");
   }
 }
@@ -124,15 +159,23 @@ export function createWorker(
         const uid = await verifyFirebaseToken(match[1], env, local);
         await authorizePartner(env.DB, uid);
         const path = url.pathname;
+        const subscriptionMatch =
+          /^\/api\/notifications\/subscriptions\/([^/]+)$/.exec(path);
         const taskMatch = /^\/api\/tasks\/([^/]+)$/.exec(path);
         const allow =
-          path === "/api/partners"
+          path === "/api/notifications/config"
             ? "GET"
-            : path === "/api/tasks"
-              ? "GET, POST"
-              : taskMatch
-                ? "PUT, DELETE"
-                : null;
+            : path === "/api/notifications/subscriptions"
+              ? "POST"
+              : subscriptionMatch
+                ? "GET, DELETE"
+                : path === "/api/partners"
+                  ? "GET"
+                  : path === "/api/tasks"
+                    ? "GET, POST"
+                    : taskMatch
+                      ? "PUT, DELETE"
+                      : null;
         if (!allow)
           throw new ApiFailure(
             404,
@@ -147,6 +190,31 @@ export function createWorker(
             undefined,
             { Allow: allow },
           );
+        if (path === "/api/notifications/config")
+          return Response.json(await notificationConfig(env), {
+            headers: noStore,
+          });
+        if (path === "/api/notifications/subscriptions") {
+          const saved = await saveSubscription(
+            env.DB,
+            uid,
+            await jsonBody(request, 8192),
+          );
+          return Response.json(
+            { id: saved.id, active: saved.active },
+            { status: saved.created ? 201 : 200, headers: noStore },
+          );
+        }
+        if (subscriptionMatch) {
+          const id = decodeURIComponent(subscriptionMatch[1]);
+          if (request.method === "DELETE") {
+            await removeSubscription(env.DB, uid, id);
+            return new Response(null, { status: 204, headers: noStore });
+          }
+          return Response.json(await subscriptionStatus(env.DB, uid, id), {
+            headers: noStore,
+          });
+        }
         if (path === "/api/partners")
           return Response.json(
             { partners: await listPartners(env.DB) },

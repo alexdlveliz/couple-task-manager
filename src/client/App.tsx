@@ -1,3 +1,5 @@
+import { NotificationSettings } from "./NotificationSettings";
+import { cleanupNotifications } from "./notifications";
 import { useEffect, useRef, useState } from "react";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import { auth, authReady, updateAuthGeneration } from "./auth";
@@ -64,6 +66,7 @@ export function App() {
   const [storageError, setStorageError] = useState("");
   const [lastSync, setLastSync] = useState("");
   const previousUid = useRef<string | null>(null);
+  const previousUser = useRef<User | null>(null);
   const [online, setOnline] = useState(navigator.onLine);
   const onlineRef = useRef(navigator.onLine);
   const coordinator = useRef<RefreshCoordinator | null>(null);
@@ -76,6 +79,10 @@ export function App() {
       if (active)
         unsubscribe = onAuthStateChanged(auth, (next) => {
           const oldUid = previousUid.current;
+          const oldUser = previousUser.current;
+          previousUser.current = next;
+          if (oldUid && oldUid !== next?.uid)
+            void cleanupNotifications(oldUser).catch(() => {});
           previousUid.current = next?.uid ?? null;
           if (oldUid && oldUid !== next?.uid)
             void invalidatePrivateData(oldUid).catch(() => {
@@ -419,7 +426,16 @@ export function App() {
         <button
           className="secondary"
           type="button"
-          onClick={() => void signOut(auth)}
+          onClick={() =>
+            void (async () => {
+              try {
+                await cleanupNotifications(user);
+              } catch {
+                // The local unsubscribe was attempted even if server removal failed.
+              }
+              await signOut(auth);
+            })()
+          }
         >
           Cerrar sesión
         </button>
@@ -459,6 +475,7 @@ export function App() {
           {saved}
         </p>
       )}
+      <NotificationSettings user={user} />
       {board ? (
         <Board
           tasks={board.tasks}

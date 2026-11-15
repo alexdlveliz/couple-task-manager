@@ -9,10 +9,11 @@ export default defineConfig({
       registerType: "autoUpdate",
       manifest: false,
       includeAssets: ["manifest.webmanifest", "icons/*.png", "icons/*.svg"],
-      workbox: {
+      strategies: "injectManifest",
+      srcDir: "src/client",
+      filename: "service-worker.ts",
+      injectManifest: {
         globPatterns: ["**/*.{js,css,html,png,svg,webmanifest}"],
-        navigateFallbackDenylist: [/^\/api(?:\/|$)/, /^\/__\/auth(?:\/|$)/],
-        runtimeCaching: [],
       },
     }),
   ],

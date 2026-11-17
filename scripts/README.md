@@ -1,5 +1,7 @@
 # Local fixtures
 
+Generate development-only Web Push credentials with `pnpm exec tsx scripts/generate-vapid.ts`. This creates the ignored `.dev.vars.vapid.local` file without overwriting an existing file or printing key material. Set its contact subject and copy the values into your ignored local Worker secrets file when configuring notifications. Use separate credentials for deployed environments.
+
 Use these credentials only with the local Firebase Auth emulator:
 
 | Account                | Password                     |

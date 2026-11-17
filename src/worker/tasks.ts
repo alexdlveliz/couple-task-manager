@@ -6,6 +6,8 @@ import type {
   Task,
 } from "../shared/contracts";
 import { ApiFailure } from "./errors";
+import { deadlineCycleStatements } from "./deadline-cycle";
+import { taskEventStatements } from "./task-notification-events";
 
 const columns =
   "id, title, assignee_uid AS assigneeUid, status, deadline, created_at AS createdAt, updated_at AS updatedAt";
@@ -113,10 +115,21 @@ async function save(
           data.assigneeUid,
         );
   const result = await db.batch([
+    ...taskEventStatements(db, {
+      id,
+      actor: uid,
+      title: data.title,
+      assigneeUid: data.assigneeUid,
+      status: creating ? "todo" : (data as ReplaceTask).status,
+      deadline: data.deadline,
+      now,
+      creating,
+    }),
     mutation,
     db.prepare(
       "UPDATE board_metadata SET revision=revision+1 WHERE id=1 AND changes()=1",
     ),
+    ...deadlineCycleStatements(db, id),
     db
       .prepare(
         `SELECT ${columns}, (SELECT revision FROM board_metadata WHERE id=1) AS revision FROM tasks WHERE id=?`,
@@ -128,13 +141,13 @@ async function save(
       )
       .bind(uid, data.assigneeUid, id),
   ]);
-  if (result[0].meta.changes !== 1)
+  if (result[2].meta.changes !== 1)
     return failMutation(
-      result[3].results[0] as MutationState | undefined,
+      result[8].results[0] as MutationState | undefined,
       creating,
     );
-  const row = result[2].results[0] as (Task & { revision: number }) | undefined;
-  if (!row || result[1].meta.changes !== 1)
+  const row = result[7].results[0] as (Task & { revision: number }) | undefined;
+  if (!row || result[3].meta.changes !== 1)
     throw new ApiFailure(
       503,
       "SERVICE_UNAVAILABLE",
@@ -166,7 +179,7 @@ export async function deleteTask(
   const result = await db.batch([
     db
       .prepare(
-        `DELETE FROM tasks WHERE id=? AND EXISTS (SELECT 1 FROM partners WHERE uid=? AND enabled=1) AND (SELECT count(*) FROM partners)=2 AND EXISTS (SELECT 1 FROM board_metadata WHERE id=1 AND revision < ${String(maxRevision)})`,
+        `DELETE FROM tasks WHERE id=? AND EXISTS (SELECT 1 FROM partners WHERE uid=? AND enabled=1) AND (SELECT count(*) FROM partners)=2 AND EXISTS (SELECT 1 FROM board_metadata WHERE id=1 AND revision < ${String(maxRevision)}) RETURNING id`,
       )
       .bind(id, uid),
     db.prepare(
@@ -174,11 +187,16 @@ export async function deleteTask(
     ),
     db
       .prepare(
+        `UPDATE notification_deliveries SET state='abandoned',lease_expires_at=NULL,last_error='obsolete' WHERE state IN ('pending','leased') AND event_id IN (SELECT id FROM notification_events WHERE task_id=? AND type='overdue') AND changes()=1`,
+      )
+      .bind(id),
+    db
+      .prepare(
         "SELECT (SELECT COUNT(*) FROM partners) AS partnerCount, EXISTS(SELECT 1 FROM partners WHERE uid=? AND enabled=1) AS callerEnabled, EXISTS(SELECT 1 FROM tasks WHERE id=?) AS taskExists, (SELECT revision FROM board_metadata WHERE id=1) AS revision",
       )
       .bind(uid, id),
   ]);
-  const state = result[2].results[0] as
+  const state = result[3].results[0] as
     | {
         partnerCount: number;
         callerEnabled: number;
@@ -186,7 +204,7 @@ export async function deleteTask(
         revision: number;
       }
     | undefined;
-  if (result[0].meta.changes !== 1) {
+  if (result[0].results.length !== 1) {
     if (state?.partnerCount === 2 && state.callerEnabled && !state.taskExists)
       throw new ApiFailure(404, "TASK_NOT_FOUND", "No se encontró la tarea.");
     if (state?.partnerCount === 2 && !state.callerEnabled)

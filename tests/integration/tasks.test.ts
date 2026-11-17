@@ -10,6 +10,9 @@ import {
 
 beforeEach(async () => {
   await env.DB.batch([
+    env.DB.prepare("DELETE FROM notification_deliveries"),
+    env.DB.prepare("DELETE FROM notification_events"),
+    env.DB.prepare("DELETE FROM notification_registrations"),
     env.DB.prepare("DELETE FROM tasks"),
     env.DB.prepare("DELETE FROM partners"),
     env.DB.prepare("UPDATE board_metadata SET revision=0 WHERE id=1"),

@@ -5,6 +5,9 @@ export interface Env {
   AUTH_MODE: "production" | "emulator";
   ENVIRONMENT?: string;
   FIREBASE_AUTH_EMULATOR_HOST?: string;
+  VAPID_PUBLIC_KEY?: string;
+  VAPID_PRIVATE_KEY?: string;
+  VAPID_SUBJECT?: string;
 }
 
 export function validateEnvironment(env: Env, local = false): void {

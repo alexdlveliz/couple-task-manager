@@ -61,6 +61,7 @@ rounded:
   list: ".85rem"
   dialog: "1rem"
   chip: "2rem"
+  kanban-card: ".75rem"
 spacing:
   small: ".5rem"
   medium: "1rem"
@@ -105,7 +106,7 @@ A calm shared workspace with the warmth of a daily journal and the clarity of a 
 
 - Warm neutrals and restrained status colors.
 - Serif headings paired with readable sans-serif controls and task text.
-- A date-led header and a shared list grouped by deadline, with clear filters and direct status selection.
+- A date-led header, status-grouped list and Kanban views, with clear filters and direct status selection.
 - Mobile-first spacing, visible focus, and honest synchronization feedback.
 
 ## Colors
@@ -118,7 +119,7 @@ Georgia gives headings a personal voice; Trebuchet MS with Segoe UI and sans-ser
 
 ## Layout
 
-The centered main area is capped at 60rem with 1.25rem padding, reduced to 1rem on screens at or below 560px. A date, large title, and partner initials lead the page; a peach summary accompanies the board heading. Deadline groups contain full-width task rows separated by fine rules. On small screens, task actions move below task details and the create action fills the available width. Filter chips wrap as space requires.
+The centered main area is capped at 60rem with 1.25rem padding, reduced to 1rem on screens at or below 560px. A date, large title, and partner initials lead the page; a peach summary accompanies the board heading. Collapsible status groups contain full-width task rows separated by fine rules. The Kanban view uses four horizontally scrollable columns, with 14rem minimum columns on wider screens and 85% width (minimum 16rem) at or below 560px. On small screens, task actions move below task details and the create action fills the available width. Filter chips wrap as space requires.
 
 ## Elevation & Depth
 
@@ -126,7 +127,7 @@ Use tonal layers rather than shadows: the page, filter area, and list surface ar
 
 ## Shapes
 
-Controls and surfaces use softly rounded corners. Deadline groups sit in softly bordered lists, with rows separated by fine lines rather than individual card outlines. Filter buttons use pill shapes; partner initials sit in circles. Fields and buttons have visible borders and a minimum 44px height.
+Controls and surfaces use softly rounded corners. Status groups sit in softly bordered lists, with rows separated by fine lines rather than individual card outlines. Filter buttons use pill shapes; partner initials sit in circles. Fields and buttons have visible borders and a minimum 44px height.
 
 ## Components
 
@@ -136,11 +137,15 @@ Primary buttons use the green action color with white text; secondary buttons us
 
 ### Shared task list
 
-Each row shows the task title, assignee, deadline, a labeled status selector, and an edit action. Pill filters apply to status and assignee, exposing their selected state with pressed semantics; show a result count and a useful empty state. Tasks are grouped under deadline headings. Status controls use text as well as subtle color, and remain disabled while offline or reconciling.
+Each row shows the task title, assignee, deadline, a labeled status selector, and an edit action. Pill filters select the assignee, exposing their selected state with pressed semantics; show a result count and a useful empty state. Tasks are grouped by status under expandable headings with counts. Status controls use text as well as subtle color, and remain disabled while offline or reconciling.
+
+### View tabs and Kanban
+
+Tabs switch between list and Kanban views, with a bordered active tab and keyboard navigation. Kanban uses warm column surfaces and bordered light cards; each card retains its status selector and edit action. Column navigation chips provide a direct way to scroll to a status. Cards can also be dragged when editing is available; their opacity decreases during a drag.
 
 ### Dialogs and feedback
 
-A native dialog contains the task form and preserves keyboard focus behavior. Loading, save, offline, and synchronization messages remain visible and understandable without depending on color. A save confirmation briefly fades from peach when reduced motion is not requested.
+Native dialogs contain the task form and notification settings. The notification bell is a 44px icon button, and closing its dialog returns focus to the bell. Loading, save, offline, and synchronization messages remain visible and understandable without depending on color. A save confirmation briefly fades from peach when reduced motion is not requested.
 
 ## Do's and Don'ts
 

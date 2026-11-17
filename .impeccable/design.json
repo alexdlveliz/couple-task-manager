@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-15T06:35:24.621793+00:00",
+  "generatedAt": "2026-11-17T19:20:49.137949+00:00",
   "title": "Design System: Couple Task Manager",
   "extensions": {
     "breakpoints": [
@@ -581,6 +581,13 @@
       "description": "Switch between task views with a visible selected state.",
       "html": "<div class=\"ds-tabs\" role=\"tablist\" aria-label=\"Vista de tareas\"><button role=\"tab\" aria-selected=\"true\">Lista</button><button role=\"tab\" aria-selected=\"false\">Kanban</button></div>",
       "css": ".ds-tabs { display:flex; gap:.25rem; border-bottom:1px solid #c9b8a9; font:700 16px \"Trebuchet MS\", \"Segoe UI\", sans-serif; } .ds-tabs button { min-height:44px; padding:.55rem 1rem; border:1px solid transparent; border-radius:.65rem .65rem 0 0; background:transparent; color:#593b30; font:inherit; } .ds-tabs button[aria-selected=\"true\"] { background:#fffdfa; border-color:#c9b8a9; border-bottom-color:#fffdfa; color:#315b47; } .ds-tabs button:hover { background:#234535; color:#fff; } .ds-tabs button:focus-visible { outline:3px solid #985b28; outline-offset:3px; }"
+    },
+    {
+      "name": "Kanban card",
+      "kind": "card",
+      "description": "A task card within a horizontally scrollable status column.",
+      "html": "<article class=\"ds-kanban-card\"><h4>Preparar la cena</h4><p>Persona A · Sin fecha límite</p><select aria-label=\"Estado\"><option>Por hacer</option></select></article>",
+      "css": ".ds-kanban-card { background:#fffdfa; color:#302c29; border:1px solid #e0d5ca; border-radius:.75rem; padding:.75rem; font:16px/1.5 \"Trebuchet MS\", \"Segoe UI\", sans-serif; } .ds-kanban-card h4 { margin:0 0 .3rem; overflow-wrap:anywhere; } .ds-kanban-card p { color:#65574d; font-size:.9rem; overflow-wrap:anywhere; } .ds-kanban-card select { min-height:44px; max-width:100%; border:1px solid #c9b8a9; border-radius:.5rem; padding:.5rem; background:#f2e9de; color:#49392f; font:700 .875rem \"Trebuchet MS\", \"Segoe UI\", sans-serif; } .ds-kanban-card select:focus-visible { outline:3px solid #985b28; outline-offset:3px; }"
     }
   ],
   "narrative": {
@@ -589,7 +596,7 @@
     "keyCharacteristics": [
       "Warm neutrals and restrained status colors.",
       "Serif headings paired with readable sans-serif controls and task text.",
-      "A date-led header and a shared list grouped by deadline, with clear filters and direct status selection.",
+      "A date-led header, status-grouped list and Kanban views, with clear filters and direct status selection.",
       "Mobile-first spacing, visible focus, and honest synchronization feedback."
     ],
     "rules": [],

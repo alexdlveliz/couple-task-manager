@@ -70,23 +70,45 @@ export function prepareNotificationAccount(uid: string): Promise<void> {
 export async function enableNotifications(
   user: User,
   publicKey: string,
+  options?: { automatic: boolean; isCurrent: () => boolean },
 ): Promise<void> {
   const generation = getAuthGeneration();
   const permission =
     Notification.permission === "granted"
       ? "granted"
-      : await Notification.requestPermission();
+      : options?.automatic
+        ? Notification.permission
+        : await Notification.requestPermission();
   if (permission !== "granted")
     throw new Error(
       "Permiso denegado. Cambia la configuración de notificaciones del navegador.",
     );
   await serial(async () => {
+    if (getAuthGeneration() !== generation || (options && !options.isCurrent()))
+      throw new Error("La sesión cambió.");
     const binding = readBinding();
     if (binding && binding.uid !== user.uid) await cleanup();
     if (!notificationBinding(user.uid)) await unsubscribe();
     // Refuse activation if a durable account binding cannot be stored.
     localStorage.setItem(key, JSON.stringify({ uid: user.uid, id: "pending" }));
-    const registration = await navigator.serviceWorker.ready;
+    // `ready` can remain pending forever when registration fails or is absent.
+    let readyTimer: ReturnType<typeof setTimeout> | undefined;
+    const readyTimeout = new Promise<never>((_, reject) => {
+      readyTimer = setTimeout(() => {
+        reject(new Error("El servicio de notificaciones no está listo."));
+      }, 5_000);
+    });
+    let registration: ServiceWorkerRegistration;
+    try {
+      registration = await Promise.race([
+        navigator.serviceWorker.ready,
+        readyTimeout,
+      ]);
+    } finally {
+      clearTimeout(readyTimer);
+    }
+    if (getAuthGeneration() !== generation || (options && !options.isCurrent()))
+      throw new Error("La sesión cambió.");
     const bytes = Uint8Array.from(
       atob(publicKey.replace(/-/g, "+").replace(/_/g, "/")),
       (c) => c.charCodeAt(0),

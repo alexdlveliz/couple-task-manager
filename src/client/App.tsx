@@ -423,22 +423,25 @@ export function App() {
             ))}
           </div>
         </div>
-        <button
-          className="secondary"
-          type="button"
-          onClick={() =>
-            void (async () => {
-              try {
-                await cleanupNotifications(user);
-              } catch {
-                // The local unsubscribe was attempted even if server removal failed.
-              }
-              await signOut(auth);
-            })()
-          }
-        >
-          Cerrar sesión
-        </button>
+        <div className="header-actions">
+          <NotificationSettings user={user} />
+          <button
+            className="secondary"
+            type="button"
+            onClick={() =>
+              void (async () => {
+                try {
+                  await cleanupNotifications(user);
+                } catch {
+                  // The local unsubscribe was attempted even if server removal failed.
+                }
+                await signOut(auth);
+              })()
+            }
+          >
+            Cerrar sesión
+          </button>
+        </div>
       </header>
       <div
         className="sync-bar"
@@ -475,7 +478,6 @@ export function App() {
           {saved}
         </p>
       )}
-      <NotificationSettings user={user} />
       {board ? (
         <Board
           tasks={board.tasks}

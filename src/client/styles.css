@@ -543,11 +543,7 @@ button.filter-chip:hover:not(:disabled) {
 }
 
 .notification-settings {
-  margin: 1.5rem 0;
-  padding: 1rem;
-  border: 1px solid var(--border, #9e8a7b);
-  border-radius: 0.75rem;
-  background: var(--surface, #fffdfa);
+  margin: 0;
 }
 .notification-settings h2 {
   margin: 0 0 0.5rem;
@@ -555,4 +551,44 @@ button.filter-chip:hover:not(:disabled) {
 }
 .notification-settings p {
   margin: 0.5rem 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+button.secondary.notification-bell,
+button.secondary.notification-bell:hover:not(:disabled),
+button.secondary.notification-bell:active:not(:disabled) {
+  background: transparent;
+  border: 0;
+}
+.notification-bell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0;
+}
+.notification-bell svg {
+  width: 22px;
+  height: 22px;
+}
+.notification-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+}
+
+@media (max-width: 560px) {
+  .app-header h1 {
+    font-size: 1.65rem;
+  }
+  .header-actions > button:not(.notification-bell) {
+    padding-inline: 0.7rem;
+  }
 }

@@ -12,7 +12,7 @@ it("enforces unique registration endpoints and event-device pairs", async () => 
   await expect(env.DB.prepare("INSERT INTO notification_events (id,task_id,type,revision,recipient_uid,payload,created_at) VALUES ('e2','task','created',1,'schema-a','{}','now')").run()).rejects.toThrow();
   await env.DB.prepare("INSERT INTO notification_events (id,task_id,type,cycle_id,recipient_uid,payload,created_at) VALUES ('e3','task','overdue','cycle','schema-a','{}','now')").run();
   await expect(env.DB.prepare("INSERT INTO notification_events (id,task_id,type,cycle_id,recipient_uid,payload,created_at) VALUES ('e4','task','overdue','cycle','schema-a','{}','now')").run()).rejects.toThrow();
-  await env.DB.prepare("INSERT INTO tasks VALUES ('schema-task','Tarea','schema-a','todo',NULL,'now','now')").run();
+  await env.DB.prepare("INSERT INTO tasks (id,title,assignee_uid,status,deadline,created_at,updated_at) VALUES ('schema-task','Tarea','schema-a','todo',NULL,'now','now')").run();
   await env.DB.prepare("INSERT INTO notification_overdue_dedup VALUES ('schema-task','cycle','schema-a')").run();
   await expect(env.DB.prepare("INSERT INTO notification_overdue_dedup VALUES ('schema-task','cycle','schema-a')").run()).rejects.toThrow();
   expect((await env.DB.prepare("SELECT expiration_time FROM notification_registrations WHERE id='r1'").first())?.expiration_time).toBeNull();

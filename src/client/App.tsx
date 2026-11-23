@@ -519,6 +519,7 @@ export function App() {
       {editor && (
         <TaskForm
           task={editor.task}
+          currentUid={user.uid}
           partners={partners}
           busy={busy}
           offline={!online}

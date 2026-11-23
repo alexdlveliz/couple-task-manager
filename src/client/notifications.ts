@@ -27,11 +27,30 @@ export function notificationBinding(uid: string): string | null {
 }
 async function unsubscribe(): Promise<void> {
   if (!("serviceWorker" in navigator)) return;
-  const registration = await navigator.serviceWorker.getRegistration();
-  const subscription = await registration?.pushManager.getSubscription();
-  if (subscription && !(await subscription.unsubscribe()))
-    throw new Error("No se pudo desactivar este dispositivo.");
+  let expired = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      expired = true;
+      reject(new Error("No se pudo desactivar este dispositivo."));
+    }, 2_000);
+  });
+  const remove = async () => {
+    const registration = await navigator.serviceWorker.getRegistration();
+    if (expired) return;
+    const subscription = await registration?.pushManager.getSubscription();
+    if (expired) return;
+    if (subscription && !(await subscription.unsubscribe()))
+      throw new Error("No se pudo desactivar este dispositivo.");
+  };
+  try {
+    await Promise.race([remove(), timeout]);
+  } finally {
+    expired = true;
+    clearTimeout(timer);
+  }
 }
+
 let sequence: Promise<void> = Promise.resolve();
 function serial(action: () => Promise<void>): Promise<void> {
   const next = sequence.then(action, action);
@@ -43,6 +62,11 @@ async function cleanup(user?: User | null): Promise<void> {
   // Keep a marker when local cleanup fails so another account cannot reuse the endpoint.
   if (binding && user && binding.uid !== user.uid) return;
   if (!binding) {
+    if (
+      typeof Notification !== "undefined" &&
+      Notification.permission !== "granted"
+    )
+      return;
     await unsubscribe();
     return;
   }

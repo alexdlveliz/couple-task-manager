@@ -5,7 +5,7 @@ import { eventSelectionSql } from "../../src/worker/task-notification-events";
 it("classifies creation, covered edits, completion and mixed saves for both actors", () => {
   const db = new DatabaseSync(":memory:");
   db.exec(
-    "CREATE TABLE partners(uid TEXT,enabled INTEGER); INSERT INTO partners VALUES ('a',1),('b',1); CREATE TABLE tasks(id TEXT,title TEXT,assignee_uid TEXT,status TEXT,deadline TEXT); INSERT INTO tasks VALUES ('t','Antes','a','todo',NULL); CREATE TABLE board_metadata(id INTEGER,revision INTEGER); INSERT INTO board_metadata VALUES (1,0)",
+    "CREATE TABLE partners(uid TEXT,enabled INTEGER); INSERT INTO partners VALUES ('a',1),('b',1); CREATE TABLE tasks(id TEXT,title TEXT,assignee_uid TEXT,status TEXT,deadline TEXT,visibility TEXT,creator_uid TEXT); INSERT INTO tasks VALUES ('t','Antes','a','todo',NULL,'shared',NULL); CREATE TABLE board_metadata(id INTEGER,revision INTEGER); INSERT INTO board_metadata VALUES (1,0)",
   );
   const select = db.prepare(eventSelectionSql);
   const run = (actor: string, data: object, creating = false) =>

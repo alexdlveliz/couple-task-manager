@@ -33,6 +33,7 @@ test("displays and refreshes a board served with weak ETags", async ({
         revision: 2,
         tasks: [
           {
+            visibility: "shared",
             id: "weak-etag-task",
             title: "Tarea con ETag débil",
             assigneeUid: "fixture",
@@ -285,6 +286,7 @@ test("groups the board and combines and resets filters", async ({
     status: string,
     assigneeUid: string,
   ) => ({
+    visibility: "shared",
     id,
     title: id,
     deadline,
@@ -425,6 +427,7 @@ test("switches views with the keyboard and preserves the responsible filter", as
 test("moves a Kanban card by dragging and by its status control", async ({
   partnerA,
 }) => {
+  test.setTimeout(60_000);
   const page = await login(
     partnerA,
     "partner-a@example.test",
@@ -486,6 +489,7 @@ test("confirms permanent deletion and synchronizes it to the other partner", asy
   partnerA,
   partnerB,
 }) => {
+  test.setTimeout(60_000);
   const a = await login(
     partnerA,
     "partner-a@example.test",

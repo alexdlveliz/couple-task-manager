@@ -9,7 +9,9 @@ export interface Partner {
   uid: string;
   displayName: string;
 }
+export type TaskVisibility = "shared" | "private";
 export interface Task {
+  visibility: TaskVisibility;
   id: string;
   title: string;
   assigneeUid: string;
@@ -20,10 +22,14 @@ export interface Task {
 }
 export interface CreateTask {
   title: string;
+  assigneeUid?: string;
+  deadline: string | null;
+  visibility?: TaskVisibility;
+}
+export interface ReplaceTask {
+  title: string;
   assigneeUid: string;
   deadline: string | null;
-}
-export interface ReplaceTask extends CreateTask {
   status: TaskStatus;
 }
 export interface BoardSnapshot {

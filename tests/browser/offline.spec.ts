@@ -71,8 +71,8 @@ test("reopens a previously verified complete board offline and refreshes after r
   await expect(page.getByText(title)).toBeVisible();
   await expect(page.getByLabel(`Cambiar estado: ${title}`)).toBeDisabled();
   await expect(
-    page.getByRole("button", { name: `Arrastrar tarea: ${title}` }),
-  ).toBeDisabled();
+    page.locator(".kanban-card").filter({ hasText: title }),
+  ).toHaveAttribute("data-draggable", "false");
   await page.getByRole("button", { name: /^Bloqueadas/ }).click();
   await partnerA.setOffline(false);
   await expect(page.getByText("Actualizado", { exact: true })).toBeVisible();

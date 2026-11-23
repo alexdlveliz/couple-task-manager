@@ -16,38 +16,18 @@ it("returns a snapshot and revision from the same read batch after a concurrent 
   const token = `${encode({ alg: "none" })}.${encode({ sub: "a", aud: "demo-shared-task-board", iss: "https://securetoken.google.com/demo-shared-task-board", iat: now, auth_time: now, exp: now + 3600 })}.`;
   let raced = false;
   const db = {
-    prepare(query: string) {
-      const statement = env.DB.prepare(query);
-      if (query === "SELECT revision FROM board_metadata WHERE id=1")
-        return new Proxy(statement, {
-          get(target, property) {
-            if (property === "first")
-              return async () => {
-                const revision = await target.first();
-                if (!raced) {
-                  raced = true;
-                  await createTask(env.DB, "b", {
-                    title: "Segunda",
-                    assigneeUid: "b",
-                    deadline: null,
-                  });
-                }
-                return revision;
-              };
-            const value: unknown = Reflect.get(target, property);
-            if (typeof value !== "function") return value;
-            const bound: unknown = Reflect.apply(
-              // eslint-disable-next-line @typescript-eslint/unbound-method -- Reflect.apply supplies the function receiver explicitly.
-              Function.prototype.bind,
-              value,
-              [target],
-            );
-            return bound;
-          },
+    prepare: env.DB.prepare.bind(env.DB),
+    async batch(statements: D1PreparedStatement[]) {
+      if (!raced) {
+        raced = true;
+        await createTask(env.DB, "b", {
+          title: "Segunda",
+          assigneeUid: "b",
+          deadline: null,
         });
-      return statement;
+      }
+      return env.DB.batch(statements);
     },
-    batch: env.DB.batch.bind(env.DB),
   } as unknown as D1Database;
   const local = {
     ...env,

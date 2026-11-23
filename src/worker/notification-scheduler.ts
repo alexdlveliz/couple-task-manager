@@ -9,7 +9,7 @@ export async function processOverdue(
   const due = await db
     .prepare(
       `SELECT n.task_id, n.cycle_id FROM notification_deadlines n JOIN tasks t ON t.id=n.task_id
-    WHERE n.deadline<=? AND t.status<>'completed' AND EXISTS (SELECT 1 FROM partners p WHERE p.enabled=1 AND NOT EXISTS (SELECT 1 FROM notification_overdue_dedup d WHERE d.task_id=n.task_id AND d.cycle_id=n.cycle_id AND d.recipient_uid=p.uid))
+    WHERE n.deadline<=? AND t.status<>'completed' AND EXISTS (SELECT 1 FROM partners p WHERE p.enabled=1 AND (t.visibility='shared' OR p.uid=t.creator_uid) AND NOT EXISTS (SELECT 1 FROM notification_overdue_dedup d WHERE d.task_id=n.task_id AND d.cycle_id=n.cycle_id AND d.recipient_uid=p.uid))
     ORDER BY n.deadline,n.task_id LIMIT ?`,
     )
     .bind(now, batchSize)
@@ -22,7 +22,7 @@ export async function processOverdue(
           `INSERT INTO notification_events(id,task_id,type,recipient_uid,cycle_id,payload,created_at)
         SELECT ? || '-' || p.uid,t.id,'overdue',p.uid,n.cycle_id,
           json_object('version',1,'eventId',? || '-' || p.uid,'title','Tarea vencida','body','La fecha límite de la tarea ha llegado: ' || t.title,'url','/'), ?
-        FROM notification_deadlines n JOIN tasks t ON t.id=n.task_id JOIN partners p ON p.enabled=1
+        FROM notification_deadlines n JOIN tasks t ON t.id=n.task_id JOIN partners p ON p.enabled=1 AND (t.visibility='shared' OR p.uid=t.creator_uid)
         WHERE n.task_id=? AND n.cycle_id=? AND n.deadline<=? AND t.status<>'completed'
         AND NOT EXISTS (SELECT 1 FROM notification_overdue_dedup d WHERE d.task_id=n.task_id AND d.cycle_id=n.cycle_id AND d.recipient_uid=p.uid)`,
         )

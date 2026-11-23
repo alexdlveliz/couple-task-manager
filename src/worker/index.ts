@@ -221,14 +221,17 @@ export function createWorker(
             { headers: noStore },
           );
         if (path === "/api/tasks" && request.method === "GET") {
-          const revision = await readRevision(env.DB);
-          const tag = `"board-r${String(revision)}"`;
-          if (request.headers.get("If-None-Match") === tag)
-            return new Response(null, {
-              status: 304,
-              headers: { ...noStore, ETag: tag },
-            });
-          const board = await readBoard(env.DB);
+          const ifNoneMatch = request.headers.get("If-None-Match");
+          if (ifNoneMatch) {
+            const revision = await readRevision(env.DB, uid);
+            const tag = `"board-r${String(revision)}"`;
+            if (ifNoneMatch === tag)
+              return new Response(null, {
+                status: 304,
+                headers: { ...noStore, ETag: tag },
+              });
+          }
+          const board = await readBoard(env.DB, uid);
           return Response.json(board, {
             headers: { ...noStore, ETag: `"board-r${String(board.revision)}"` },
           });

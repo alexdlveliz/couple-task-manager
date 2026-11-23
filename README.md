@@ -64,6 +64,12 @@ Escribe y revisa manualmente los archivos SQL numerados en `migrations/`. Con la
 
 Para aplicar migraciones a la base remota de desarrollo, un operador autorizado debe revisar el SQL y la configuración `env.dev` de Wrangler, confirmar el identificador de D1 y proporcionar sus credenciales de Cloudflare externamente. Después puede ejecutar `make migrate ENV=dev`. El comando aplica las migraciones pendientes sin una confirmación interactiva adicional; una selección vacía o desconocida falla sin cambiar de destino. Las migraciones remotas son una operación independiente de la publicación.
 
+### Despliegue y reversión de tareas privadas
+
+Antes de habilitar tareas privadas, respalda la base D1 y aplica en orden las migraciones `0004_private_tasks.sql` y `0005_mutation_guard.sql` a la base prevista. Después publica juntos el Worker compatible y su interfaz. Comprueba con ambas cuentas la visibilidad, las revisiones y los destinatarios de notificaciones conforme a [quickstart.md](specs/007-private-tasks/quickstart.md).
+
+Una vez creada una tarea privada, utiliza únicamente una versión del Worker compatible con tareas privadas para una reversión. Si no hay una versión compatible disponible, detén el tráfico de tareas mientras restauras el servicio. Un Worker anterior a esta función puede mostrar tareas privadas a la otra cuenta.
+
 ## Publicación en desarrollo
 
 `make deploy ENV=dev` compila en modo de producción y publica únicamente en el entorno `dev` de Wrangler. Antes de ejecutarlo, revisa el Worker, la carpeta de activos `dist`, la base D1 y el proyecto Firebase de `env.dev` en `wrangler.jsonc`; proporciona autorización de Cloudflare por los medios habituales de Wrangler. Configura `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN` y `VITE_USE_AUTH_EMULATOR=false` en el entorno o en `.env.dev`. El proyecto del cliente debe coincidir con `FIREBASE_PROJECT_ID` del Worker. Vite también carga `.env.local`; los valores de `.env.dev` tienen prioridad sobre `.env.local`; `.env.dev.local` y las variables del entorno tienen prioridad sobre `.env.dev`, así que comprueba que no queden valores del emulador en la configuración efectiva.

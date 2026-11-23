@@ -233,3 +233,155 @@ it("submits both devices 30 seconds after the deadline under normal fake transpo
   );
   expect(submissions.sort()).toEqual(["ra", "rb"]);
 });
+
+it.each(["a", "b"])(
+  "notifies only private owner %s and advances past already processed candidates",
+  async (owner) => {
+    const privateTask = await createTask(env.DB, owner, {
+      title: "Privada",
+      visibility: "private",
+      deadline: past,
+    });
+    await processOverdue(env.DB, now, 1);
+    expect((await overdue()).map((event) => event.recipient_uid)).toEqual([
+      owner,
+    ]);
+    await createTask(env.DB, "a", {
+      title: "Compartida",
+      assigneeUid: "a",
+      deadline: "2029-02-01T00:00:00.000Z",
+    });
+    await processOverdue(env.DB, now, 1);
+    expect(await overdue()).toHaveLength(3);
+    await replaceTask(env.DB, owner, privateTask.task.id, {
+      title: "Cambio",
+      assigneeUid: owner,
+      status: "todo",
+      deadline: "2029-03-01T00:00:00.000Z",
+    });
+    await processOverdue(env.DB, now, 1);
+    const privateEvents = (
+      await env.DB.prepare(
+        "SELECT recipient_uid FROM notification_events WHERE task_id=? AND type='overdue' ORDER BY created_at",
+      )
+        .bind(privateTask.task.id)
+        .all()
+    ).results;
+    expect(privateEvents).toEqual([
+      { recipient_uid: owner },
+      { recipient_uid: owner },
+    ]);
+  },
+);
+
+it("keeps private deadline cycles and delivery cleanup atomic across silent edits", async () => {
+  const task = await createTask(env.DB, "a", {
+    title: "Personal",
+    visibility: "private",
+    deadline: past,
+  });
+  await processOverdue(env.DB, now);
+  const firstCycle = await env.DB.prepare(
+    "SELECT cycle_id FROM notification_deadlines WHERE task_id=?",
+  )
+    .bind(task.task.id)
+    .first<{ cycle_id: string }>();
+  await replaceTask(env.DB, "a", task.task.id, {
+    title: "Sin notificación",
+    assigneeUid: "a",
+    status: "todo",
+    deadline: "2029-04-01T00:00:00.000Z",
+  });
+  const nextCycle = await env.DB.prepare(
+    "SELECT cycle_id FROM notification_deadlines WHERE task_id=?",
+  )
+    .bind(task.task.id)
+    .first<{ cycle_id: string }>();
+  expect(nextCycle?.cycle_id).not.toBe(firstCycle?.cycle_id);
+  expect(
+    (
+      await env.DB.prepare(
+        "SELECT state FROM notification_deliveries d JOIN notification_events e ON e.id=d.event_id WHERE e.task_id=? AND e.type='overdue'",
+      )
+        .bind(task.task.id)
+        .all()
+    ).results,
+  ).toEqual([{ state: "abandoned" }]);
+  expect(
+    (
+      await env.DB.prepare(
+        "SELECT type FROM notification_events WHERE task_id=? AND type='changed'",
+      )
+        .bind(task.task.id)
+        .all()
+    ).results,
+  ).toEqual([]);
+  await processOverdue(env.DB, now);
+  await replaceTask(env.DB, "a", task.task.id, {
+    title: "Sin notificación",
+    assigneeUid: "a",
+    status: "completed",
+    deadline: "2029-04-01T00:00:00.000Z",
+  });
+  await replaceTask(env.DB, "a", task.task.id, {
+    title: "Sin notificación",
+    assigneeUid: "a",
+    status: "todo",
+    deadline: "2029-04-01T00:00:00.000Z",
+  });
+  await processOverdue(env.DB, now);
+  const events = await env.DB.prepare(
+    "SELECT recipient_uid FROM notification_events WHERE task_id=? AND type='overdue'",
+  )
+    .bind(task.task.id)
+    .all();
+  expect(events.results).toEqual([
+    { recipient_uid: "a" },
+    { recipient_uid: "a" },
+  ]);
+});
+
+it("skips a disabled private owner without blocking shared overdue tasks", async () => {
+  await createTask(env.DB, "a", {
+    title: "Privada",
+    visibility: "private",
+    deadline: past,
+  });
+  await createTask(env.DB, "b", {
+    title: "Compartida",
+    assigneeUid: "b",
+    deadline: "2029-02-01T00:00:00.000Z",
+  });
+  await env.DB.prepare("UPDATE partners SET enabled=0 WHERE uid='a'").run();
+  await processOverdue(env.DB, now, 1);
+  expect((await overdue()).map((item) => item.recipient_uid)).toEqual(["b"]);
+});
+
+it("does not clean up overdue deliveries when an authorized save fails", async () => {
+  const task = await createTask(env.DB, "a", {
+    title: "Pendiente",
+    visibility: "private",
+    deadline: past,
+  });
+  await processOverdue(env.DB, now);
+  await env.DB.prepare("UPDATE tasks SET status='completed' WHERE id=?")
+    .bind(task.task.id)
+    .run();
+  await env.DB.prepare(
+    "UPDATE board_metadata SET revision=9007199254740991 WHERE id=1",
+  ).run();
+  await expect(
+    replaceTask(env.DB, "a", task.task.id, {
+      title: "Rechazada",
+      assigneeUid: "a",
+      status: "completed",
+      deadline: past,
+    }),
+  ).rejects.toMatchObject({ status: 503 });
+  const states = await env.DB.prepare(
+    "SELECT d.state FROM notification_deliveries d JOIN notification_events e ON e.id=d.event_id WHERE e.type='overdue' AND e.task_id=?",
+  )
+    .bind(task.task.id)
+    .all();
+  expect(states.results).toEqual([{ state: "pending" }]);
+});

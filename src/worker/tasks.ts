@@ -10,11 +10,19 @@ import { deadlineCycleStatements } from "./deadline-cycle";
 import { taskEventStatements } from "./task-notification-events";
 
 const columns =
-  "id, title, assignee_uid AS assigneeUid, status, deadline, created_at AS createdAt, updated_at AS updatedAt";
+  "id, title, assignee_uid AS assigneeUid, status, deadline, created_at AS createdAt, updated_at AS updatedAt, visibility";
 const maxRevision = 9007199254740991;
-export async function readRevision(db: D1Database): Promise<number> {
+const callerRevision =
+  "CASE p.slot WHEN 1 THEN m.slot_1_revision ELSE m.slot_2_revision END";
+export async function readRevision(
+  db: D1Database,
+  uid: string,
+): Promise<number> {
   const row = await db
-    .prepare("SELECT revision FROM board_metadata WHERE id=1")
+    .prepare(
+      `SELECT ${callerRevision} AS revision FROM board_metadata m JOIN partners p ON p.uid=? AND p.enabled=1 WHERE m.id=1`,
+    )
+    .bind(uid)
     .first<{ revision: number }>();
   if (!row)
     throw new ApiFailure(
@@ -24,10 +32,21 @@ export async function readRevision(db: D1Database): Promise<number> {
     );
   return row.revision;
 }
-export async function readBoard(db: D1Database): Promise<BoardSnapshot> {
+export async function readBoard(
+  db: D1Database,
+  uid: string,
+): Promise<BoardSnapshot> {
   const [rows, metadata] = await db.batch([
-    db.prepare(`SELECT ${columns} FROM tasks ORDER BY created_at, id`),
-    db.prepare("SELECT revision FROM board_metadata WHERE id=1"),
+    db
+      .prepare(
+        `SELECT ${columns} FROM tasks WHERE visibility='shared' OR creator_uid=? ORDER BY created_at, id`,
+      )
+      .bind(uid),
+    db
+      .prepare(
+        `SELECT ${callerRevision} AS revision FROM board_metadata m JOIN partners p ON p.uid=? AND p.enabled=1 WHERE m.id=1`,
+      )
+      .bind(uid),
   ]);
   const revision = (metadata.results[0] as { revision: number } | undefined)
     ?.revision;
@@ -44,6 +63,7 @@ interface MutationState {
   callerEnabled: number;
   assigneeEnabled: number;
   taskExists: number;
+  privateReassignment: number;
 }
 function failMutation(
   state: MutationState | undefined,
@@ -63,6 +83,13 @@ function failMutation(
     );
   if (!creating && !state.taskExists)
     throw new ApiFailure(404, "TASK_NOT_FOUND", "No se encontró la tarea.");
+  if (state.privateReassignment)
+    throw new ApiFailure(
+      400,
+      "VALIDATION_ERROR",
+      "Revisa los datos de la tarea.",
+      { assigneeUid: "La tarea privada debe estar asignada a ti." },
+    );
   if (!state.assigneeEnabled)
     throw new ApiFailure(
       400,
@@ -84,62 +111,89 @@ async function save(
   creating: boolean,
 ): Promise<SaveResult> {
   const now = new Date().toISOString();
+  const mutationToken = crypto.randomUUID();
+  const visibility = creating
+    ? ((data as CreateTask).visibility ?? "shared")
+    : "shared";
+  if (
+    creating &&
+    visibility === "private" &&
+    data.assigneeUid &&
+    data.assigneeUid !== uid
+  )
+    throw new ApiFailure(
+      400,
+      "VALIDATION_ERROR",
+      "Revisa los datos de la tarea.",
+      { assigneeUid: "La tarea privada debe estar asignada a ti." },
+    );
+  const assigneeUid = visibility === "private" ? uid : (data.assigneeUid ?? "");
   const guard = `EXISTS (SELECT 1 FROM partners WHERE uid=? AND enabled=1) AND EXISTS (SELECT 1 FROM partners WHERE uid=? AND enabled=1) AND EXISTS (SELECT 1 FROM board_metadata WHERE id=1 AND revision < ${String(maxRevision)}) AND (SELECT count(*) FROM partners)=2`;
   const mutation = creating
     ? db
         .prepare(
-          `INSERT INTO tasks (id,title,assignee_uid,status,deadline,created_at,updated_at) SELECT ?,?,?,'todo',?,?,? WHERE ${guard}`,
+          `INSERT INTO tasks (id,title,assignee_uid,status,deadline,created_at,updated_at,visibility,creator_uid) SELECT ?,?,?,'todo',?,?,?,?,? WHERE ${guard}`,
         )
         .bind(
           id,
           data.title,
-          data.assigneeUid,
+          assigneeUid,
           data.deadline,
           now,
           now,
+          visibility,
+          visibility === "private" ? uid : null,
           uid,
-          data.assigneeUid,
+          assigneeUid,
         )
     : db
         .prepare(
-          `UPDATE tasks SET title=?,assignee_uid=?,status=?,deadline=?,updated_at=? WHERE id=? AND ${guard}`,
+          `UPDATE tasks SET title=?,assignee_uid=?,status=?,deadline=?,updated_at=? WHERE id=? AND (visibility='shared' OR creator_uid=?) AND (visibility='shared' OR assignee_uid=?) AND ${guard}`,
         )
         .bind(
           data.title,
-          data.assigneeUid,
+          assigneeUid,
           (data as ReplaceTask).status,
           data.deadline,
           now,
           id,
           uid,
-          data.assigneeUid,
+          assigneeUid,
+          uid,
+          assigneeUid,
         );
   const result = await db.batch([
     ...taskEventStatements(db, {
       id,
       actor: uid,
       title: data.title,
-      assigneeUid: data.assigneeUid,
+      assigneeUid,
       status: creating ? "todo" : (data as ReplaceTask).status,
       deadline: data.deadline,
       now,
       creating,
+      visibility,
     }),
     mutation,
-    db.prepare(
-      "UPDATE board_metadata SET revision=revision+1 WHERE id=1 AND changes()=1",
-    ),
-    ...deadlineCycleStatements(db, id),
     db
       .prepare(
-        `SELECT ${columns}, (SELECT revision FROM board_metadata WHERE id=1) AS revision FROM tasks WHERE id=?`,
+        `UPDATE board_metadata SET revision=revision+1, mutation_token=?,
+      slot_1_revision=slot_1_revision + CASE WHEN (SELECT visibility FROM tasks WHERE id=?)='shared' OR (SELECT slot FROM partners WHERE uid=?)=1 THEN 1 ELSE 0 END,
+      slot_2_revision=slot_2_revision + CASE WHEN (SELECT visibility FROM tasks WHERE id=?)='shared' OR (SELECT slot FROM partners WHERE uid=?)=2 THEN 1 ELSE 0 END
+      WHERE id=1 AND changes()=1`,
       )
-      .bind(id),
+      .bind(mutationToken, id, uid, id, uid),
+    ...deadlineCycleStatements(db, id, uid, assigneeUid, mutationToken),
     db
       .prepare(
-        "SELECT (SELECT COUNT(*) FROM partners) AS partnerCount, EXISTS(SELECT 1 FROM partners WHERE uid=? AND enabled=1) AS callerEnabled, EXISTS(SELECT 1 FROM partners WHERE uid=? AND enabled=1) AS assigneeEnabled, EXISTS(SELECT 1 FROM tasks WHERE id=?) AS taskExists",
+        `SELECT ${columns}, (SELECT ${callerRevision} FROM board_metadata m JOIN partners p ON p.uid=? WHERE m.id=1) AS revision FROM tasks WHERE id=? AND (visibility='shared' OR creator_uid=?)`,
       )
-      .bind(uid, data.assigneeUid, id),
+      .bind(uid, id, uid),
+    db
+      .prepare(
+        "SELECT (SELECT COUNT(*) FROM partners) AS partnerCount, EXISTS(SELECT 1 FROM partners WHERE uid=? AND enabled=1) AS callerEnabled, EXISTS(SELECT 1 FROM partners WHERE uid=? AND enabled=1) AS assigneeEnabled, EXISTS(SELECT 1 FROM tasks WHERE id=? AND (visibility='shared' OR creator_uid=?)) AS taskExists, EXISTS(SELECT 1 FROM tasks WHERE id=? AND visibility='private' AND creator_uid=? AND assignee_uid<>?) AS privateReassignment",
+      )
+      .bind(uid, assigneeUid, id, uid, id, uid, assigneeUid),
   ]);
   if (result[2].meta.changes !== 1)
     return failMutation(
@@ -179,12 +233,19 @@ export async function deleteTask(
   const result = await db.batch([
     db
       .prepare(
-        `DELETE FROM tasks WHERE id=? AND EXISTS (SELECT 1 FROM partners WHERE uid=? AND enabled=1) AND (SELECT count(*) FROM partners)=2 AND EXISTS (SELECT 1 FROM board_metadata WHERE id=1 AND revision < ${String(maxRevision)}) RETURNING id`,
+        `UPDATE board_metadata SET revision=revision+1,
+      slot_1_revision=slot_1_revision + CASE WHEN (SELECT visibility FROM tasks WHERE id=?)='shared' OR (SELECT slot FROM partners WHERE uid=?)=1 THEN 1 ELSE 0 END,
+      slot_2_revision=slot_2_revision + CASE WHEN (SELECT visibility FROM tasks WHERE id=?)='shared' OR (SELECT slot FROM partners WHERE uid=?)=2 THEN 1 ELSE 0 END
+      WHERE id=1 AND revision < ${String(maxRevision)} AND (SELECT count(*) FROM partners)=2
+      AND EXISTS (SELECT 1 FROM partners WHERE uid=? AND enabled=1)
+      AND EXISTS (SELECT 1 FROM tasks WHERE id=? AND (visibility='shared' OR creator_uid=?))`,
+      )
+      .bind(id, uid, id, uid, uid, id, uid),
+    db
+      .prepare(
+        `DELETE FROM tasks WHERE id=? AND (visibility='shared' OR creator_uid=?) AND changes()=1 RETURNING id`,
       )
       .bind(id, uid),
-    db.prepare(
-      "UPDATE board_metadata SET revision=revision+1 WHERE id=1 AND changes()=1",
-    ),
     db
       .prepare(
         `UPDATE notification_deliveries SET state='abandoned',lease_expires_at=NULL,last_error='obsolete' WHERE state IN ('pending','leased') AND event_id IN (SELECT id FROM notification_events WHERE task_id=? AND type='overdue') AND changes()=1`,
@@ -192,9 +253,9 @@ export async function deleteTask(
       .bind(id),
     db
       .prepare(
-        "SELECT (SELECT COUNT(*) FROM partners) AS partnerCount, EXISTS(SELECT 1 FROM partners WHERE uid=? AND enabled=1) AS callerEnabled, EXISTS(SELECT 1 FROM tasks WHERE id=?) AS taskExists, (SELECT revision FROM board_metadata WHERE id=1) AS revision",
+        `SELECT (SELECT COUNT(*) FROM partners) AS partnerCount, EXISTS(SELECT 1 FROM partners WHERE uid=? AND enabled=1) AS callerEnabled, EXISTS(SELECT 1 FROM tasks WHERE id=? AND (visibility='shared' OR creator_uid=?)) AS taskExists, (SELECT ${callerRevision} FROM board_metadata m JOIN partners p ON p.uid=? WHERE m.id=1) AS revision`,
       )
-      .bind(uid, id),
+      .bind(uid, id, uid, uid),
   ]);
   const state = result[3].results[0] as
     | {
@@ -204,7 +265,7 @@ export async function deleteTask(
         revision: number;
       }
     | undefined;
-  if (result[0].results.length !== 1) {
+  if (result[1].results.length !== 1) {
     if (state?.partnerCount === 2 && state.callerEnabled && !state.taskExists)
       throw new ApiFailure(404, "TASK_NOT_FOUND", "No se encontró la tarea.");
     if (state?.partnerCount === 2 && !state.callerEnabled)
@@ -219,7 +280,7 @@ export async function deleteTask(
       "El servicio no está disponible. Inténtalo de nuevo.",
     );
   }
-  if (result[1].meta.changes !== 1 || !state)
+  if (result[0].meta.changes !== 1 || !state)
     throw new Error("Deletion revision unavailable");
   return { revision: state.revision };
 }

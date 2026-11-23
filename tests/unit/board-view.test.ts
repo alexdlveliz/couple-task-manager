@@ -9,6 +9,7 @@ describe("shared task list", () => {
       createElement(Board, {
         tasks: [
           {
+            visibility: "shared",
             id: "1",
             title: "Comprar pan",
             assigneeUid: "a",
@@ -42,6 +43,7 @@ const task = (
   deadline: string | null,
   status: Task["status"] = "todo",
 ): Task => ({
+  visibility: "shared",
   id,
   title: id,
   assigneeUid: "a",

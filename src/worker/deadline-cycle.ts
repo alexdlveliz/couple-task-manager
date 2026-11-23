@@ -10,6 +10,9 @@ export function deadlineTransition(
 export function deadlineCycleStatements(
   db: D1Database,
   taskId: string,
+  actorUid: string,
+  assigneeUid: string,
+  mutationToken: string,
 ): D1PreparedStatement[] {
   return [
     db
@@ -21,13 +24,13 @@ export function deadlineCycleStatements(
       .bind(taskId),
     db
       .prepare(
-        `DELETE FROM notification_deadlines WHERE task_id=? AND EXISTS (SELECT 1 FROM tasks WHERE id=? AND deadline IS NULL)`,
+        `DELETE FROM notification_deadlines WHERE task_id=? AND EXISTS (SELECT 1 FROM board_metadata WHERE id=1 AND mutation_token=?) AND EXISTS (SELECT 1 FROM tasks WHERE id=? AND deadline IS NULL AND (visibility='shared' OR (creator_uid=? AND assignee_uid=?)))`,
       )
-      .bind(taskId, taskId),
+      .bind(taskId, mutationToken, taskId, actorUid, assigneeUid),
     db
       .prepare(
-        `UPDATE notification_deliveries SET state='abandoned',lease_expires_at=NULL,last_error='obsolete' WHERE state IN ('pending','leased') AND event_id IN (SELECT e.id FROM notification_events e WHERE e.task_id=? AND e.type='overdue' AND NOT EXISTS (SELECT 1 FROM tasks t JOIN notification_deadlines n ON n.task_id=t.id WHERE t.id=e.task_id AND t.status<>'completed' AND n.cycle_id=e.cycle_id))`,
+        `UPDATE notification_deliveries SET state='abandoned',lease_expires_at=NULL,last_error='obsolete' WHERE EXISTS (SELECT 1 FROM board_metadata WHERE id=1 AND mutation_token=?) AND EXISTS (SELECT 1 FROM tasks WHERE id=? AND (visibility='shared' OR (creator_uid=? AND assignee_uid=?))) AND state IN ('pending','leased') AND event_id IN (SELECT e.id FROM notification_events e WHERE e.task_id=? AND e.type='overdue' AND NOT EXISTS (SELECT 1 FROM tasks t JOIN notification_deadlines n ON n.task_id=t.id WHERE t.id=e.task_id AND t.status<>'completed' AND n.cycle_id=e.cycle_id))`,
       )
-      .bind(taskId),
+      .bind(mutationToken, taskId, actorUid, assigneeUid, taskId),
   ];
 }

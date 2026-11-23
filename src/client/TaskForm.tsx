@@ -14,6 +14,7 @@ import {
 interface Props {
   task?: Task;
   partners: Partner[];
+  currentUid: string;
   busy: boolean;
   offline: boolean;
   reconciling: boolean;
@@ -25,6 +26,7 @@ interface Props {
 export function TaskForm({
   task,
   partners,
+  currentUid,
   busy,
   offline,
   reconciling,
@@ -39,6 +41,7 @@ export function TaskForm({
   const dateRef = useRef<HTMLInputElement>(null);
   const timeRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState(task?.title ?? "");
+  const [visibility, setVisibility] = useState(task?.visibility ?? "shared");
   const [assignee, setAssignee] = useState(task?.assigneeUid ?? "");
   const [status, setStatus] = useState<TaskStatus>(task?.status ?? "todo");
   const [zone, setZone] = useState(currentZone);
@@ -83,7 +86,8 @@ export function TaskForm({
       titleRef.current?.focus();
       return;
     }
-    if (!partners.some((partner) => partner.uid === assignee)) {
+    const selectedAssignee = visibility === "private" ? currentUid : assignee;
+    if (!partners.some((partner) => partner.uid === selectedAssignee)) {
       setError("Selecciona una persona autorizada.");
       assigneeRef.current?.focus();
       return;
@@ -128,8 +132,18 @@ export function TaskForm({
     }
     await onSave(
       task
-        ? { title: title.trim(), assigneeUid: assignee, status, deadline }
-        : { title: title.trim(), assigneeUid: assignee, deadline },
+        ? {
+            title: title.trim(),
+            assigneeUid: selectedAssignee,
+            status,
+            deadline,
+          }
+        : {
+            title: title.trim(),
+            assigneeUid: selectedAssignee,
+            deadline,
+            visibility,
+          },
     );
   }
   return (
@@ -160,6 +174,31 @@ export function TaskForm({
           }}
           aria-describedby={titleInvalid ? "form-error" : undefined}
         />
+        {!task ? (
+          <fieldset className="visibility-options">
+            <legend>Visibilidad</legend>
+            <label>
+              <input
+                type="radio"
+                name="visibility"
+                checked={visibility === "shared"}
+                onChange={() => setVisibility("shared")}
+              />{" "}
+              Compartida
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="visibility"
+                checked={visibility === "private"}
+                onChange={() => setVisibility("private")}
+              />{" "}
+              Privada
+            </label>
+          </fieldset>
+        ) : task.visibility === "private" ? (
+          <p>Privada</p>
+        ) : null}
         <label htmlFor="assignee">Responsable</label>
         <select
           id="assignee"
@@ -167,7 +206,8 @@ export function TaskForm({
           required
           aria-invalid={assigneeInvalid}
           aria-describedby={assigneeInvalid ? "form-error" : undefined}
-          value={assignee}
+          value={visibility === "private" ? currentUid : assignee}
+          disabled={visibility === "private"}
           onChange={(event) => {
             setAssignee(event.target.value);
           }}

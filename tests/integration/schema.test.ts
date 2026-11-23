@@ -17,7 +17,7 @@ describe("D1 schema", () => {
     ).rejects.toThrow();
     await expect(
       env.DB.prepare(
-        "INSERT INTO tasks VALUES ('id','Task','missing','todo',NULL,'2026-01-01T00:00:00Z','2026-01-01T00:00:00Z')",
+        "INSERT INTO tasks (id,title,assignee_uid,status,deadline,created_at,updated_at) VALUES ('id','Task','missing','todo',NULL,'2026-01-01T00:00:00Z','2026-01-01T00:00:00Z')",
       ).run(),
     ).rejects.toThrow();
   });

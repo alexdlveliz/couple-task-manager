@@ -212,3 +212,45 @@ it("repairs a corrupted stored snapshot using a new complete board", async () =>
   await writeSnapshot("project", complete, 0);
   expect(await readSnapshot("project", "repair")).toEqual(complete);
 });
+
+it("normalizes legacy tasks while preserving account isolation", async () => {
+  const db = await new Promise<IDBDatabase>((resolve, reject) => {
+    const request = indexedDB.open("shared-task-board", 1);
+    request.onupgradeneeded = () =>
+      request.result.createObjectStore("snapshots");
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  const legacy = {
+    uid: "legacy",
+    schemaVersion: 1,
+    partners: [],
+    revision: 1,
+    lastSyncAt: "2026-01-01T00:00:00Z",
+    tasks: [
+      {
+        id: "t",
+        title: "T",
+        assigneeUid: "a",
+        status: "todo",
+        deadline: null,
+        createdAt: "2026",
+        updatedAt: "2026",
+      },
+    ],
+  };
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction("snapshots", "readwrite");
+    tx.objectStore("snapshots").put(
+      { generation: 0, blocked: false, snapshot: legacy },
+      "project:legacy:1",
+    );
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  db.close();
+  expect((await readSnapshot("project", "legacy"))?.tasks[0].visibility).toBe(
+    "shared",
+  );
+  expect(await readSnapshot("project", "other")).toBeNull();
+});

@@ -42,8 +42,8 @@ description: "Implementation checklist for Private Tasks"
 
 ## Phase 6 — Cross-cutting validation
 
-- [ ] T014 Verify every scenario in `specs/007-private-tasks/quickstart.md`, including same-device offline account switching, conditional revision isolation, unauthorized replacement and deletion, shared recipient regressions, and upgrade from existing shared rows. Run `make test` and record actual results and any manual checks still pending in `specs/007-private-tasks/validation.md`.
-- [ ] T015 Review the rollout and rollback order against `specs/007-private-tasks/plan.md` and `README.md`. Confirm the migration precedes the compatible Worker rollout and a pre-feature Worker cannot serve private rows after activation.
+- [X] T014 Verify every scenario in `specs/007-private-tasks/quickstart.md`, including same-device offline account switching, conditional revision isolation, unauthorized replacement and deletion, shared recipient regressions, and upgrade from existing shared rows. Run `make test` and record actual results and any manual checks still pending in `specs/007-private-tasks/validation.md`.
+- [X] T015 Review the rollout and rollback order against `specs/007-private-tasks/plan.md` and `README.md`. Confirm the migration precedes the compatible Worker rollout and a pre-feature Worker cannot serve private rows after activation.
 
 ## Dependencies and execution order
 

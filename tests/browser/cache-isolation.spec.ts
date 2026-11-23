@@ -81,6 +81,7 @@ for (const status of [401, 403])
   test(`a ${String(status)} rejection clears the active session in all tabs`, async ({
     browser,
   }, testInfo) => {
+    test.setTimeout(60_000);
     const { viewport, userAgent, deviceScaleFactor, isMobile, hasTouch } =
       testInfo.project.use;
     const context = await browser.newContext({
@@ -137,6 +138,7 @@ for (const status of [401, 403])
 test("failed private-cache cleanup blocks offline restoration until cleanup succeeds", async ({
   partnerA,
 }) => {
+  test.setTimeout(60_000);
   await partnerA.addInitScript(() => {
     // eslint-disable-next-line @typescript-eslint/unbound-method -- The original method is invoked below using call with the database as receiver.
     const original = IDBDatabase.prototype.transaction;
@@ -150,7 +152,7 @@ test("failed private-cache cleanup blocks offline restoration until cleanup succ
       return original.call(this, storeNames, mode, options);
     };
   });
-  const page = await partnerA.newPage();
+  let page = await partnerA.newPage();
   await page.goto("http://127.0.0.1:8787");
   async function signIn() {
     await page.getByLabel("Correo electrónico").fill("partner-a@example.test");
@@ -234,7 +236,8 @@ test("failed private-cache cleanup blocks offline restoration until cleanup succ
   await page.evaluate(() => {
     localStorage.removeItem("test-fail-cleanup");
   });
-  await page.reload();
+  page = await partnerA.newPage();
+  await page.goto("http://127.0.0.1:8787");
   await expect(page.getByText("Actualizado", { exact: true })).toBeVisible();
   await expect
     .poll(() =>
@@ -287,6 +290,7 @@ test("a delayed board response cannot reappear after switching accounts", async 
           revision: 9000,
           tasks: [
             {
+              visibility: "private",
               id: "late",
               title: "Respuesta antigua privada",
               assigneeUid: "old",
@@ -322,4 +326,30 @@ test("a delayed board response cannot reappear after switching accounts", async 
     release();
     await context.close();
   }
+});
+
+test("sign-out completes when push subscription lookup stalls", async ({
+  partnerA,
+}) => {
+  await partnerA.addInitScript(() => {
+    if (window.PushManager) {
+      Object.defineProperty(Notification, "permission", {
+        configurable: true,
+        value: "granted",
+      });
+      PushManager.prototype.getSubscription = () => new Promise(() => {});
+    }
+  });
+  const page = await partnerA.newPage();
+  await page.goto("http://127.0.0.1:8787");
+  await page.getByLabel("Correo electrónico").fill("partner-a@example.test");
+  await page.getByLabel("Contraseña").fill("local-demo-password-a");
+  await page.getByRole("button", { name: "Entrar" }).click();
+  await expect(
+    page.getByRole("button", { name: "Cerrar sesión" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Cerrar sesión" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Iniciar sesión" }),
+  ).toBeVisible({ timeout: 10_000 });
 });

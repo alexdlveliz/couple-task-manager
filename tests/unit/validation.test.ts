@@ -9,6 +9,7 @@ describe("task request validation", () => {
       title: "Hacer compras",
       assigneeUid: "partner-a",
       deadline: null,
+      visibility: "shared",
     });
   });
   it.each([
@@ -93,4 +94,42 @@ it("rejects unsupported statuses and server-generated fields on replacement", ()
       updatedAt: "2026-01-01T00:00:00Z",
     }),
   ).toThrow();
+});
+
+it("validates visibility and private assignment inputs", () => {
+  expect(parseCreateTask({ title: "x", visibility: "private" })).toMatchObject({
+    visibility: "private",
+  });
+  expect(() =>
+    parseCreateTask({ title: "x", visibility: "unknown" }),
+  ).toThrow();
+  expect(() =>
+    parseReplaceTask({
+      title: "x",
+      assigneeUid: "a",
+      status: "todo",
+      deadline: null,
+      visibility: "private",
+    }),
+  ).toThrow();
+});
+
+it("rejects null visibility and immutable replacement fields", () => {
+  expect(() =>
+    parseCreateTask({ title: "x", assigneeUid: "a", visibility: null }),
+  ).toThrow();
+  for (const field of ["visibility", "creatorUid", "creator_uid"]) {
+    expect(() =>
+      parseReplaceTask({
+        title: "x",
+        assigneeUid: "a",
+        status: "todo",
+        deadline: null,
+        [field]: "a",
+      }),
+    ).toThrow();
+  }
+  expect(
+    parseCreateTask({ title: "x", visibility: "private" }),
+  ).not.toHaveProperty("assigneeUid");
 });

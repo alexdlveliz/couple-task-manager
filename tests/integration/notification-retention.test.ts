@@ -15,7 +15,7 @@ it("removes old operational records in bounded batches while retaining current-c
       "INSERT INTO partners VALUES (1,'ret-a','Ana',1),(2,'ret-b','Bea',1)",
     ),
     env.DB.prepare(
-      "INSERT INTO tasks VALUES ('ret-task','Tarea','ret-a','todo','2026-01-01','2025-01-01','2025-01-01')",
+      "INSERT INTO tasks (id,title,assignee_uid,status,deadline,created_at,updated_at) VALUES ('ret-task','Tarea','ret-a','todo','2026-01-01','2025-01-01','2025-01-01')",
     ),
     env.DB.prepare(
       "INSERT INTO notification_deadlines VALUES ('ret-task','current','2026-01-01')",

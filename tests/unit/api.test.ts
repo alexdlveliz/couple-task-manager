@@ -131,3 +131,43 @@ it.each([undefined, 'W/"board-r1"', 'w/"board-r2"', 'W/"board-r02"'])(
     await expect(createApi(user, () => {}).board()).rejects.toThrow();
   },
 );
+
+it("sends create visibility and decodes private tasks", async () => {
+  const task = {
+    id: "private-task",
+    title: "Personal",
+    assigneeUid: "a",
+    status: "todo",
+    deadline: null,
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z",
+    visibility: "private",
+  };
+  const fetcher = vi
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(Response.json({ task, revision: 1 }))
+    .mockResolvedValueOnce(Response.json({ task, revision: 2 }));
+  const api = createApi(user, () => {});
+  await expect(
+    api.create({ title: task.title, visibility: "private", deadline: null }),
+  ).resolves.toMatchObject({ task });
+  expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body))).toEqual({
+    title: task.title,
+    visibility: "private",
+    deadline: null,
+  });
+  const replacement = {
+    title: task.title,
+    assigneeUid: "a",
+    status: "completed" as const,
+    deadline: null,
+    visibility: "private",
+  };
+  await api.replace(task.id, replacement);
+  expect(JSON.parse(String(fetcher.mock.calls[1][1]?.body))).toEqual({
+    title: task.title,
+    assigneeUid: "a",
+    status: "completed",
+    deadline: null,
+  });
+});

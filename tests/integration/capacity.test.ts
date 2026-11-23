@@ -9,7 +9,7 @@ describe("local capacity sample", () => {
       "INSERT INTO partners VALUES (1,'capacity-a','A',1),(2,'capacity-b','B',1)",
     ).run();
     const insert = env.DB.prepare(
-      "INSERT INTO tasks VALUES (?,?,?,'todo',NULL,?,?)",
+      "INSERT INTO tasks (id,title,assignee_uid,status,deadline,created_at,updated_at) VALUES (?,?,?,'todo',NULL,?,?)",
     );
     const stamp = "2026-01-01T00:00:00.000Z";
     for (let offset = 0; offset < 1000; offset += 100) {

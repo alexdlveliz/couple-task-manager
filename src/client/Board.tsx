@@ -271,6 +271,9 @@ export function Board({
                           <article className="task">
                             <div className="task-content">
                               <h4>{task.title}</h4>
+                              {task.visibility === "private" && (
+                                <span>Privada</span>
+                              )}
                               <p>
                                 {partners.find(
                                   (partner) => partner.uid === task.assigneeUid,

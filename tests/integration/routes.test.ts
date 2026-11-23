@@ -135,3 +135,55 @@ describe("API routes", () => {
     ).toBe(403);
   });
 });
+
+it("keeps private writes out of the other partner's conditional board", async () => {
+  await env.DB.batch([
+    env.DB.prepare("DELETE FROM notification_deliveries"),
+    env.DB.prepare("DELETE FROM notification_events"),
+    env.DB.prepare("DELETE FROM tasks"),
+    env.DB.prepare("DELETE FROM partners"),
+    env.DB.prepare(
+      "UPDATE board_metadata SET revision=0,slot_1_revision=0,slot_2_revision=0 WHERE id=1",
+    ),
+  ]);
+  await env.DB.prepare(
+    "INSERT INTO partners VALUES (1,'a','Ana',1),(2,'b','Bea',1)",
+  ).run();
+  const partnerBToken = `${encode({ alg: "none" })}.${encode({ sub: "b", aud: "demo-shared-task-board", iss: "https://securetoken.google.com/demo-shared-task-board", iat: now, auth_time: now, exp: now + 3600 })}.`;
+  const bHeaders = { Authorization: `Bearer ${partnerBToken}` };
+  const before = await worker.fetch(
+    req("/api/tasks", { headers: bHeaders }),
+    local,
+  );
+  const etag = before.headers.get("ETag");
+  const created = await worker.fetch(
+    req("/api/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "Secreta", visibility: "private" }),
+    }),
+    local,
+  );
+  expect(created.status).toBe(201);
+  const body = (await created.json()) as { task: { id: string } };
+  const unchanged = await worker.fetch(
+    req("/api/tasks", { headers: { ...bHeaders, "If-None-Match": etag! } }),
+    local,
+  );
+  expect(unchanged.status).toBe(304);
+  const hidden = await worker.fetch(
+    req(`/api/tasks/${body.task.id}`, { method: "DELETE", headers: bHeaders }),
+    local,
+  );
+  const missing = await worker.fetch(
+    req("/api/tasks/missing", { method: "DELETE", headers: bHeaders }),
+    local,
+  );
+  expect(hidden.status).toBe(404);
+  expect(await hidden.json()).toEqual(await missing.json());
+  const board = await worker.fetch(
+    req("/api/tasks", { headers: bHeaders }),
+    local,
+  );
+  expect(((await board.json()) as { tasks: unknown[] }).tasks).toEqual([]);
+});

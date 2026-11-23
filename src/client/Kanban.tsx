@@ -140,6 +140,7 @@ export function Kanban({
                     <article>
                       <div className="kanban-card-heading">
                         <h4>{task.title}</h4>
+                        {task.visibility === "private" && <span>Privada</span>}
                       </div>
                       <p>
                         {partners.find(

@@ -46,6 +46,9 @@ function isCompleteSnapshot(
     value.tasks.every(
       (task) =>
         isObject(task) &&
+        (task.visibility === undefined ||
+          task.visibility === "shared" ||
+          task.visibility === "private") &&
         typeof task.id === "string" &&
         typeof task.title === "string" &&
         typeof task.assigneeUid === "string" &&
@@ -128,7 +131,13 @@ export function readSnapshot(
     if (value.blocked || !value.snapshot) return null;
     if (!isCompleteSnapshot(value.snapshot, uid))
       throw new Error("Incomplete stored snapshot");
-    return value.snapshot;
+    return {
+      ...value.snapshot,
+      tasks: value.snapshot.tasks.map((task) => ({
+        ...task,
+        visibility: task.visibility ?? "shared",
+      })),
+    };
   });
 }
 export function currentGeneration(

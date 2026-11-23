@@ -5,15 +5,16 @@ WITH input AS (SELECT json_extract(value,'$.id') id, json_extract(value,'$.actor
  json_extract(value,'$.title') title, json_extract(value,'$.assigneeUid') assignee,
  json_extract(value,'$.status') status, json_extract(value,'$.deadline') deadline,
  json_extract(value,'$.now') now, json_extract(value,'$.eventId') event_id,
- json_extract(value,'$.creating') creating FROM (SELECT ? value)),
+ json_extract(value,'$.creating') creating, json_extract(value,'$.visibility') visibility FROM (SELECT ? value)),
  changes AS (
- SELECT i.*, t.title IS NOT i.title AS title_changed,
+ SELECT i.*, CASE WHEN i.creating THEN COALESCE(i.visibility,'shared') ELSE t.visibility END AS task_visibility,
+ t.title IS NOT i.title AS title_changed,
  t.assignee_uid IS NOT i.assignee AS assignee_changed,
  t.deadline IS NOT i.deadline AS deadline_changed,
  t.status IS NOT i.status AS status_changed,
  (t.status <> 'completed' AND i.status = 'completed') AS completion
  FROM input i LEFT JOIN tasks t ON t.id=i.id
- WHERE (i.creating OR t.id IS NOT NULL)
+ WHERE (i.creating OR (t.id IS NOT NULL AND (t.visibility='shared' OR (t.creator_uid=i.actor AND t.assignee_uid=i.assignee))))
  AND EXISTS (SELECT 1 FROM partners WHERE uid=i.actor AND enabled=1)
  AND EXISTS (SELECT 1 FROM partners WHERE uid=i.assignee AND enabled=1)
  AND (SELECT count(*) FROM partners)=2
@@ -25,8 +26,8 @@ WITH input AS (SELECT json_extract(value,'$.id') id, json_extract(value,'$.actor
  (CASE WHEN c.assignee_changed THEN 'asignación, ' ELSE '' END) ||
  (CASE WHEN c.deadline_changed THEN 'fecha límite, ' ELSE '' END) ||
  (CASE WHEN c.status_changed AND NOT c.completion THEN 'estado, ' ELSE '' END), ', ') AS fields
- FROM changes c JOIN partners p ON p.enabled=1
- WHERE c.creating OR c.completion OR (p.uid<>c.actor AND (c.title_changed OR c.assignee_changed OR c.deadline_changed OR c.status_changed))
+ FROM changes c JOIN partners p ON p.enabled=1 AND (c.task_visibility='shared' OR p.uid=c.actor)
+ WHERE c.creating OR c.completion OR (c.task_visibility='shared' AND p.uid<>c.actor AND (c.title_changed OR c.assignee_changed OR c.deadline_changed OR c.status_changed))
 )
 SELECT notification_id id, id task_id, type, (SELECT revision+1 FROM board_metadata WHERE id=1) revision,
  recipient_uid, CASE WHEN creating OR (completion AND recipient_uid=actor) THEN '' ELSE fields END changed_fields,
@@ -47,6 +48,7 @@ export function taskEventStatements(
     deadline: string | null;
     now: string;
     creating: boolean;
+    visibility?: "shared" | "private";
   },
 ): D1PreparedStatement[] {
   const eventId = crypto.randomUUID();

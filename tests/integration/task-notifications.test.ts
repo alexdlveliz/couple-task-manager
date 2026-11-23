@@ -9,7 +9,9 @@ beforeEach(async () => {
     env.DB.prepare("DELETE FROM notification_registrations"),
     env.DB.prepare("DELETE FROM tasks"),
     env.DB.prepare("DELETE FROM partners"),
-    env.DB.prepare("UPDATE board_metadata SET revision=0 WHERE id=1"),
+    env.DB.prepare(
+      "UPDATE board_metadata SET revision=0, slot_1_revision=0, slot_2_revision=0 WHERE id=1",
+    ),
     env.DB.prepare(
       "INSERT INTO partners VALUES (1,'a','Ana',1),(2,'b','Bea',1)",
     ),
@@ -91,7 +93,7 @@ it("suppresses unchanged and rejected saves while preserving revisions", async (
     }),
   ).rejects.toThrow();
   expect((await events()).length).toBe(2);
-  expect((await readBoard(env.DB)).revision).toBe(2);
+  expect((await readBoard(env.DB, "a")).revision).toBe(2);
 });
 it("compares simultaneous replacements against their serialized predecessors", async () => {
   const created = await createTask(env.DB, "a", {
@@ -157,7 +159,7 @@ it("schedules dispatch after a successful API save and preserves the response wh
   expect(response.status).toBe(201);
   expect(waits).toHaveLength(1);
   await Promise.all(waits);
-  expect((await readBoard(env.DB)).tasks).toHaveLength(1);
+  expect((await readBoard(env.DB, "a")).tasks).toHaveLength(1);
   expect(
     (
       await env.DB.prepare(
@@ -184,7 +186,7 @@ it("rolls back events and snapshots when a later batch statement fails", async (
     }),
   ).rejects.toThrow();
   expect(await events()).toEqual([]);
-  expect((await readBoard(env.DB)).revision).toBe(0);
+  expect((await readBoard(env.DB, "a")).revision).toBe(0);
   expect(
     (
       await env.DB.prepare(
@@ -247,4 +249,79 @@ it("submits each saved event to its eligible device using a fake transport", asy
     { registrationId: "ra", title: "Tarea creada" },
     { registrationId: "rb", title: "Tarea creada" },
   ]);
+});
+
+it.each(["a", "b"])(
+  "sends private creation and completion only to %s and keeps edits silent",
+  async (owner) => {
+    const created = await createTask(env.DB, owner, {
+      title: "Personal",
+      visibility: "private",
+      deadline: null,
+    });
+    await replaceTask(env.DB, owner, created.task.id, {
+      title: "Editada",
+      assigneeUid: owner,
+      status: "todo",
+      deadline: "2029-01-01T00:00:00Z",
+    });
+    await replaceTask(env.DB, owner, created.task.id, {
+      title: "Finalizada",
+      assigneeUid: owner,
+      status: "completed",
+      deadline: "2029-01-01T00:00:00Z",
+    });
+    expect(
+      (await events()).map(({ type, recipient_uid }) => [type, recipient_uid]),
+    ).toEqual([
+      ["created", owner],
+      ["completed", owner],
+    ]);
+    const deliveries = await env.DB.prepare(
+      "SELECT r.partner_uid FROM notification_deliveries d JOIN notification_registrations r ON r.id=d.registration_id ORDER BY d.event_id",
+    ).all();
+    expect(deliveries.results).toEqual([
+      { partner_uid: owner },
+      { partner_uid: owner },
+    ]);
+  },
+);
+
+it("rolls back private completion and deadline updates when a batch fails", async () => {
+  const created = await createTask(env.DB, "a", {
+    title: "Personal",
+    visibility: "private",
+    deadline: "2029-01-01T00:00:00.000Z",
+  });
+  const beforeEvents = await events();
+  const beforeCycle = await env.DB.prepare(
+    "SELECT cycle_id,deadline FROM notification_deadlines WHERE task_id=?",
+  )
+    .bind(created.task.id)
+    .first();
+  const failing = {
+    prepare: env.DB.prepare.bind(env.DB),
+    batch: (statements: D1PreparedStatement[]) =>
+      env.DB.batch([
+        ...statements,
+        env.DB.prepare("SELECT * FROM nonexistent_failure_table"),
+      ]),
+  } as unknown as D1Database;
+  await expect(
+    replaceTask(failing, "a", created.task.id, {
+      title: "Finalizada",
+      assigneeUid: "a",
+      status: "completed",
+      deadline: "2030-01-01T00:00:00.000Z",
+    }),
+  ).rejects.toThrow();
+  expect(await events()).toEqual(beforeEvents);
+  expect(
+    await env.DB.prepare(
+      "SELECT cycle_id,deadline FROM notification_deadlines WHERE task_id=?",
+    )
+      .bind(created.task.id)
+      .first(),
+  ).toEqual(beforeCycle);
+  expect((await readBoard(env.DB, "a")).tasks[0]).toEqual(created.task);
 });

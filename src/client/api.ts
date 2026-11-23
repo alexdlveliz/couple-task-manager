@@ -28,6 +28,7 @@ const matchesBoardTag = (tag: string | null, revision: number): boolean => {
 function isTask(value: unknown): value is Task {
   return (
     isObject(value) &&
+    (value.visibility === "shared" || value.visibility === "private") &&
     typeof value.id === "string" &&
     typeof value.title === "string" &&
     typeof value.assigneeUid === "string" &&
@@ -243,7 +244,12 @@ export function createApi(
       const result = (
         await call(`/api/tasks/${encodeURIComponent(id)}`, {
           method: "PUT",
-          body: JSON.stringify(data),
+          body: JSON.stringify({
+            title: data.title,
+            assigneeUid: data.assigneeUid,
+            status: data.status,
+            deadline: data.deadline,
+          }),
         })
       ).data;
       if (!isSave(result)) return invalid();

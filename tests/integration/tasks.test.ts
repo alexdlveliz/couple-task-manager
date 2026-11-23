@@ -5,7 +5,6 @@ import {
   deleteTask,
   replaceTask,
   readBoard,
-  readRevision,
 } from "../../src/worker/tasks";
 
 beforeEach(async () => {
@@ -15,7 +14,9 @@ beforeEach(async () => {
     env.DB.prepare("DELETE FROM notification_registrations"),
     env.DB.prepare("DELETE FROM tasks"),
     env.DB.prepare("DELETE FROM partners"),
-    env.DB.prepare("UPDATE board_metadata SET revision=0 WHERE id=1"),
+    env.DB.prepare(
+      "UPDATE board_metadata SET revision=0, slot_1_revision=0, slot_2_revision=0 WHERE id=1",
+    ),
   ]);
 });
 
@@ -43,19 +44,19 @@ it("deletes for either partner without advancing revision for rejected attempts"
   expect(await deleteTask(env.DB, "a", second.task.id)).toEqual({
     revision: 4,
   });
-  expect(await readBoard(env.DB)).toEqual({ revision: 4, tasks: [] });
+  expect(await readBoard(env.DB, "a")).toEqual({ revision: 4, tasks: [] });
   const third = await createTask(env.DB, "a", {
     title: "Tres",
     assigneeUid: "a",
     deadline: null,
   });
   await env.DB.prepare(
-    "UPDATE board_metadata SET revision=9007199254740991 WHERE id=1",
+    "UPDATE board_metadata SET revision=9007199254740991, slot_1_revision=9007199254740991, slot_2_revision=9007199254740991 WHERE id=1",
   ).run();
   await expect(deleteTask(env.DB, "a", third.task.id)).rejects.toMatchObject({
     status: 503,
   });
-  expect((await readBoard(env.DB)).tasks).toEqual([third.task]);
+  expect((await readBoard(env.DB, "a")).tasks).toEqual([third.task]);
 });
 
 describe("atomic board saves", () => {
@@ -78,7 +79,7 @@ describe("atomic board saves", () => {
     });
     expect(next.revision).toBe(2);
     expect(next.task.createdAt).toBe(first.task.createdAt);
-    expect(await readBoard(env.DB)).toEqual({
+    expect(await readBoard(env.DB, "a")).toEqual({
       revision: 2,
       tasks: [next.task],
     });
@@ -97,7 +98,7 @@ describe("atomic board saves", () => {
         deadline: null,
       }),
     ).rejects.toMatchObject({ status: 400 });
-    expect(await readRevision(env.DB)).toBe(2);
+    expect(await (await readBoard(env.DB, "a")).revision).toBe(2);
   });
 });
 
@@ -126,7 +127,7 @@ it("serializes concurrent full replacements and increments even for same values"
   ]);
   expect([first.revision, second.revision].sort()).toEqual([2, 3]);
   const winner = first.revision > second.revision ? first : second;
-  expect((await readBoard(env.DB)).tasks[0]).toEqual(winner.task);
+  expect((await readBoard(env.DB, "a2")).tasks[0]).toEqual(winner.task);
   const same = await replaceTask(env.DB, "a2", winner.task.id, {
     title: winner.task.title,
     assigneeUid: winner.task.assigneeUid,
@@ -140,7 +141,7 @@ it("rejects a save at revision overflow without changing the board", async () =>
     "INSERT INTO partners VALUES (1,'a3','Ana',1),(2,'b3','Bea',1)",
   ).run();
   await env.DB.prepare(
-    "UPDATE board_metadata SET revision=9007199254740991 WHERE id=1",
+    "UPDATE board_metadata SET revision=9007199254740991, slot_1_revision=9007199254740991, slot_2_revision=9007199254740991 WHERE id=1",
   ).run();
   await expect(
     createTask(env.DB, "a3", {
@@ -149,7 +150,7 @@ it("rejects a save at revision overflow without changing the board", async () =>
       deadline: null,
     }),
   ).rejects.toMatchObject({ status: 503 });
-  expect(await readBoard(env.DB)).toEqual({
+  expect(await readBoard(env.DB, "a3")).toEqual({
     revision: 9007199254740991,
     tasks: [],
   });
@@ -174,7 +175,7 @@ it("rolls back the task and revision when a batch statement fails", async () => 
       deadline: null,
     }),
   ).rejects.toThrow();
-  expect(await readBoard(env.DB)).toEqual({ revision: 0, tasks: [] });
+  expect(await readBoard(env.DB, "a4")).toEqual({ revision: 0, tasks: [] });
 });
 
 it("rejects a mutation if the assignee is disabled immediately before its batch", async () => {
@@ -197,7 +198,7 @@ it("rejects a mutation if the assignee is disabled immediately before its batch"
       deadline: null,
     }),
   ).rejects.toMatchObject({ status: 400 });
-  expect(await readBoard(env.DB)).toEqual({ revision: 1, tasks: [] });
+  expect(await readBoard(env.DB, "a5")).toEqual({ revision: 1, tasks: [] });
 });
 
 it("classifies a rejected write using the state seen in its transaction", async () => {
@@ -246,7 +247,7 @@ it("permits every status transition including reopening a completed task", async
     });
     expect(result.task.status).toBe(status);
   }
-  expect((await readBoard(env.DB)).revision).toBe(5);
+  expect((await readBoard(env.DB, "a7")).revision).toBe(5);
 });
 
 it("rejects a mutation if the caller is disabled immediately before its batch", async () => {
@@ -269,7 +270,7 @@ it("rejects a mutation if the caller is disabled immediately before its batch", 
       deadline: null,
     }),
   ).rejects.toMatchObject({ status: 403 });
-  expect(await readBoard(env.DB)).toEqual({ revision: 1, tasks: [] });
+  expect(await readBoard(env.DB, "b8")).toEqual({ revision: 1, tasks: [] });
 });
 
 it("returns all statuses ordered by creation time and ID", async () => {
@@ -278,16 +279,16 @@ it("returns all statuses ordered by creation time and ID", async () => {
   ).run();
   await env.DB.batch([
     env.DB.prepare(
-      "INSERT INTO tasks VALUES ('z','Última','a9','completed',NULL,'2026-01-02T00:00:00Z','2026-01-02T00:00:00Z')",
+      "INSERT INTO tasks (id,title,assignee_uid,status,deadline,created_at,updated_at) VALUES ('z','Última','a9','completed',NULL,'2026-01-02T00:00:00Z','2026-01-02T00:00:00Z')",
     ),
     env.DB.prepare(
-      "INSERT INTO tasks VALUES ('b','Segunda','a9','blocked',NULL,'2026-01-01T00:00:00Z','2026-01-01T00:00:00Z')",
+      "INSERT INTO tasks (id,title,assignee_uid,status,deadline,created_at,updated_at) VALUES ('b','Segunda','a9','blocked',NULL,'2026-01-01T00:00:00Z','2026-01-01T00:00:00Z')",
     ),
     env.DB.prepare(
-      "INSERT INTO tasks VALUES ('a','Primera','b9','todo',NULL,'2026-01-01T00:00:00Z','2026-01-01T00:00:00Z')",
+      "INSERT INTO tasks (id,title,assignee_uid,status,deadline,created_at,updated_at) VALUES ('a','Primera','b9','todo',NULL,'2026-01-01T00:00:00Z','2026-01-01T00:00:00Z')",
     ),
   ]);
-  expect((await readBoard(env.DB)).tasks.map((task) => task.id)).toEqual([
+  expect((await readBoard(env.DB, "a9")).tasks.map((task) => task.id)).toEqual([
     "a",
     "b",
     "z",
@@ -312,8 +313,127 @@ it("rolls back deletion when a batch statement fails", async () => {
       ]),
   } as unknown as D1Database;
   await expect(deleteTask(failing, "a", created.task.id)).rejects.toThrow();
-  expect(await readBoard(env.DB)).toEqual({
+  expect(await readBoard(env.DB, "a")).toEqual({
     revision: 1,
     tasks: [created.task],
   });
+});
+
+it("creates private tasks with the authenticated partner as owner and assignee", async () => {
+  await env.DB.prepare(
+    "INSERT INTO partners VALUES (1,'private-a','Ana',1),(2,'private-b','Bea',1)",
+  ).run();
+  const saved = await createTask(env.DB, "private-a", {
+    title: "Personal",
+    visibility: "private",
+    deadline: null,
+  });
+  expect(saved.task).toMatchObject({
+    visibility: "private",
+    assigneeUid: "private-a",
+  });
+  expect(
+    await env.DB.prepare("SELECT creator_uid FROM tasks WHERE id=?")
+      .bind(saved.task.id)
+      .first(),
+  ).toMatchObject({ creator_uid: "private-a" });
+  await expect(
+    createTask(env.DB, "private-a", {
+      title: "Otra",
+      visibility: "private",
+      assigneeUid: "private-b",
+      deadline: null,
+    }),
+  ).rejects.toMatchObject({ status: 400 });
+});
+
+it.each(["private-a", "private-b"])(
+  "lets %s edit their private task while retaining ownership",
+  async (uid) => {
+    await env.DB.prepare(
+      "INSERT INTO partners VALUES (1,'private-a','Ana',1),(2,'private-b','Bea',1)",
+    ).run();
+    const created = await createTask(env.DB, uid, {
+      title: "Personal",
+      visibility: "private",
+      deadline: null,
+    });
+    const edited = await replaceTask(env.DB, uid, created.task.id, {
+      title: "Editada",
+      assigneeUid: uid,
+      status: "completed",
+      deadline: null,
+    });
+    expect(edited.task).toMatchObject({
+      title: "Editada",
+      visibility: "private",
+      assigneeUid: uid,
+      status: "completed",
+    });
+  },
+);
+
+it("denies another partner's private mutation without side effects", async () => {
+  await env.DB.prepare(
+    "INSERT INTO partners VALUES (1,'private-a','Ana',1),(2,'private-b','Bea',1)",
+  ).run();
+  const task = await createTask(env.DB, "private-a", {
+    title: "Personal",
+    visibility: "private",
+    deadline: null,
+  });
+  const before = await env.DB.prepare(
+    "SELECT count(*) AS count FROM notification_events",
+  ).first();
+  await expect(
+    replaceTask(env.DB, "private-b", task.task.id, {
+      title: "Changed",
+      assigneeUid: "private-b",
+      status: "completed",
+      deadline: null,
+    }),
+  ).rejects.toMatchObject({ status: 404 });
+  await expect(
+    deleteTask(env.DB, "private-b", task.task.id),
+  ).rejects.toMatchObject({ status: 404 });
+  expect(
+    await env.DB.prepare(
+      "SELECT count(*) AS count FROM notification_events",
+    ).first(),
+  ).toEqual(before);
+  await expect(
+    replaceTask(env.DB, "private-a", task.task.id, {
+      title: "Personal",
+      assigneeUid: "private-b",
+      status: "todo",
+      deadline: null,
+    }),
+  ).rejects.toMatchObject({ status: 400 });
+});
+
+it("isolates board revisions and tasks by partner", async () => {
+  await env.DB.prepare(
+    "INSERT INTO partners VALUES (1,'aud-a','Ana',1),(2,'aud-b','Bea',1)",
+  ).run();
+  const privateTask = await createTask(env.DB, "aud-a", {
+    title: "Privada",
+    visibility: "private",
+    deadline: null,
+  });
+  const a = await readBoard(env.DB, "aud-a");
+  const b = await readBoard(env.DB, "aud-b");
+  expect(a.tasks.map((task) => task.id)).toContain(privateTask.task.id);
+  expect(b.tasks).toEqual([]);
+  expect(a.revision).toBe(1);
+  expect(b.revision).toBe(0);
+  const shared = await createTask(env.DB, "aud-b", {
+    title: "Compartida",
+    assigneeUid: "aud-a",
+    deadline: null,
+  });
+  expect(shared.revision).toBe(1);
+  expect((await readBoard(env.DB, "aud-a")).revision).toBe(2);
+  await deleteTask(env.DB, "aud-a", privateTask.task.id);
+  expect((await readBoard(env.DB, "aud-a")).revision).toBe(3);
+  expect((await readBoard(env.DB, "aud-b")).revision).toBe(1);
 });

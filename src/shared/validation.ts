@@ -27,13 +27,21 @@ function objectInput(
     throw new ValidationError();
   return data;
 }
-function fields(data: Record<string, unknown>): CreateTask {
+type ReplaceTaskFields = {
+  title: string;
+  assigneeUid: string;
+  deadline: string | null;
+};
+function fields(
+  data: Record<string, unknown>,
+  privateTask = false,
+): ReplaceTaskFields {
   const errors: Record<string, string> = {};
   const title = typeof data.title === "string" ? data.title.trim() : "";
   const assigneeUid =
     typeof data.assigneeUid === "string" ? data.assigneeUid : "";
   if (!title) errors.title = "Escribe un título.";
-  if (!assigneeUid.trim())
+  if (!assigneeUid.trim() && (!privateTask || data.assigneeUid !== undefined))
     errors.assigneeUid = "Selecciona una persona autorizada.";
   let deadline: string | null = null;
   if (data.deadline !== undefined && data.deadline !== null) {
@@ -54,13 +62,22 @@ function fields(data: Record<string, unknown>): CreateTask {
   return { title, assigneeUid, deadline };
 }
 export function parseCreateTask(input: unknown): CreateTask {
-  return fields(
-    objectInput(
-      input,
-      ["title", "assigneeUid", "deadline"],
-      ["title", "assigneeUid"],
-    ),
+  const data = objectInput(
+    input,
+    ["title", "assigneeUid", "deadline", "visibility"],
+    ["title"],
   );
+  const visibility = data.visibility === undefined ? "shared" : data.visibility;
+  if (visibility !== "shared" && visibility !== "private")
+    throw new ValidationError({
+      visibility: "Selecciona una visibilidad válida.",
+    });
+  const parsed = fields(data, visibility === "private");
+  if (visibility === "private" && data.assigneeUid === undefined) {
+    const { title, deadline } = parsed;
+    return { title, deadline, visibility };
+  }
+  return { ...parsed, visibility };
 }
 export function parseReplaceTask(input: unknown): ReplaceTask {
   const data = objectInput(
